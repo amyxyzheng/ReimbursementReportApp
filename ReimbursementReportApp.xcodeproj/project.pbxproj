@@ -34,8 +34,26 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Tests/ReimbursementReportAppTests/ReimbursementReportAppTests.swift,
+				Tests/ReimbursementReportAppUITests/ReimbursementReportAppUITests.swift,
+				Tests/ReimbursementReportAppUITests/ReimbursementReportAppUITestsLaunchTests.swift,
 			);
 			target = EA290C8D2E23691C00A285F6 /* ReimbursementReportApp */;
+		};
+		EA290CCC2E2369D300A285F6 /* Exceptions for "ReimbursementReportApp" folder in "ReimbursementReportAppTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Tests/ReimbursementReportAppTests/ReimbursementReportAppTests.swift,
+			);
+			target = EA290CA12E23691E00A285F6 /* ReimbursementReportAppTests */;
+		};
+		EA290CD22E2369D600A285F6 /* Exceptions for "ReimbursementReportApp" folder in "ReimbursementReportAppUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Tests/ReimbursementReportAppUITests/ReimbursementReportAppUITests.swift,
+				Tests/ReimbursementReportAppUITests/ReimbursementReportAppUITestsLaunchTests.swift,
+			);
+			target = EA290CAB2E23691E00A285F6 /* ReimbursementReportAppUITests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -44,18 +62,10 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				EA290CB42E23691E00A285F6 /* Exceptions for "ReimbursementReportApp" folder in "ReimbursementReportApp" target */,
+				EA290CCC2E2369D300A285F6 /* Exceptions for "ReimbursementReportApp" folder in "ReimbursementReportAppTests" target */,
+				EA290CD22E2369D600A285F6 /* Exceptions for "ReimbursementReportApp" folder in "ReimbursementReportAppUITests" target */,
 			);
 			path = ReimbursementReportApp;
-			sourceTree = "<group>";
-		};
-		EA290CA52E23691E00A285F6 /* ReimbursementReportAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ReimbursementReportAppTests;
-			sourceTree = "<group>";
-		};
-		EA290CAF2E23691E00A285F6 /* ReimbursementReportAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ReimbursementReportAppUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -89,8 +99,6 @@
 			isa = PBXGroup;
 			children = (
 				EA290C902E23691C00A285F6 /* ReimbursementReportApp */,
-				EA290CA52E23691E00A285F6 /* ReimbursementReportAppTests */,
-				EA290CAF2E23691E00A285F6 /* ReimbursementReportAppUITests */,
 				EA290C8F2E23691C00A285F6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -143,9 +151,6 @@
 			dependencies = (
 				EA290CA42E23691E00A285F6 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				EA290CA52E23691E00A285F6 /* ReimbursementReportAppTests */,
-			);
 			name = ReimbursementReportAppTests;
 			packageProductDependencies = (
 			);
@@ -165,9 +170,6 @@
 			);
 			dependencies = (
 				EA290CAE2E23691E00A285F6 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				EA290CAF2E23691E00A285F6 /* ReimbursementReportAppUITests */,
 			);
 			name = ReimbursementReportAppUITests;
 			packageProductDependencies = (
@@ -288,6 +290,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ReimbursementReportApp/ReimbursementReportApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T6N362L5R5;
@@ -312,6 +315,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amyz.ReimbursementReportApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -328,6 +332,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ReimbursementReportApp/ReimbursementReportApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T6N362L5R5;
@@ -352,6 +357,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amyz.ReimbursementReportApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
