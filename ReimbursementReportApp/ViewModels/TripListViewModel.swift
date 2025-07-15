@@ -34,7 +34,10 @@ class TripListViewModel: ObservableObject {
                  city: String,
                  country: String,
                  startDate: Date,
-                 endDate: Date) {
+                 endDate: Date,
+                 transportType: String,
+                 originCity: String,
+                 noTransportReason: String?) {
         let trip = Trip(context: context)
         trip.id = UUID()
         trip.name = name
@@ -42,6 +45,9 @@ class TripListViewModel: ObservableObject {
         trip.destinationCountry = country
         trip.startDate = startDate
         trip.endDate = endDate
+        trip.transportType = transportType
+        trip.originCity = originCity
+        trip.noTransportReason = noTransportReason
         // no event ranges yet
         saveAndRefresh()
     }

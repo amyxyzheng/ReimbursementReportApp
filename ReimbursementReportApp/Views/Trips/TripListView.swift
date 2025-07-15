@@ -10,15 +10,12 @@ import SwiftUI
 struct TripListView: View {
     @StateObject var vm = TripListViewModel()
     @State private var showingAdd = false
-    @State private var editingTrip: Trip? = nil
 
     var body: some View {
         NavigationView {
             List {
                 ForEach(vm.trips, id: \.id) { trip in
-                    Button {
-                        editingTrip = trip
-                    } label: {
+                    NavigationLink(destination: TripDetailView(vm: TripDetailViewModel(trip: trip))) {
                         VStack(alignment: .leading) {
                             Text(trip.name ?? "(No Name)")
                                 .font(.headline)
@@ -46,9 +43,6 @@ struct TripListView: View {
             }
             .sheet(isPresented: $showingAdd) {
                 AddTripView(viewModel: vm)
-            }
-            .sheet(item: $editingTrip) { trip in
-                AddTripView(viewModel: vm, editingTrip: trip)
             }
         }
     }

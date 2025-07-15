@@ -13,13 +13,17 @@ struct PersistenceController {
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "ReimbursementModel")
-        // Configure CloudKit and history tracking
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
         let desc = container.persistentStoreDescriptions.first!
         desc.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         desc.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+
+        // **NEW**: Enable lightweight migration
+        desc.shouldMigrateStoreAutomatically = true
+        desc.shouldInferMappingModelAutomatically = true
+
         container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Unresolved error: \(error)")

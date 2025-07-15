@@ -17,6 +17,10 @@ struct AddTripView: View {
     @State private var country: String
     @State private var startDate: Date
     @State private var endDate: Date
+    @State private var transportType: TransportType
+    @State private var originCity: String
+    @State private var noTransportReason: NoTransportReason?
+
 
     init(viewModel: TripListViewModel, editingTrip: Trip? = nil) {
         self.viewModel = viewModel
@@ -27,6 +31,9 @@ struct AddTripView: View {
         _country = State(initialValue: editingTrip?.destinationCountry ?? "")
         _startDate = State(initialValue: editingTrip?.startDate ?? Date())
         _endDate = State(initialValue: editingTrip?.endDate ?? Date())
+        _transportType = State(initialValue: TransportType(rawValue: editingTrip?.transportType ?? "flight") ?? .flight)
+        _originCity = State(initialValue: editingTrip?.originCity ?? "")
+        _noTransportReason = State(initialValue: NoTransportReason(rawValue: editingTrip?.noTransportReason ?? ""))
     }
 
     var body: some View {
@@ -34,14 +41,29 @@ struct AddTripView: View {
             Form {
                 Section("Trip Info") {
                     TextField("Name", text: $name)
+                        .onChange(of: name) { newValue in
+                            if newValue.count > 50 {
+                                name = String(newValue.prefix(50))
+                            }
+                        }
                     TextField("City", text: $city)
                     TextField("Country", text: $country)
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
                     DatePicker("End Date", selection: $endDate, displayedComponents: .date)
                 }
+                
+                Section("Transportation") {
+                    TransportationSelector(
+                        transportType: $transportType,
+                        originCity: $originCity,
+                        noTransportReason: $noTransportReason,
+                        isEditable: true
+                    )
+                }
                 // Future: EventDateRanges list & add
             }
             .navigationTitle(editingTrip == nil ? "Add Trip" : "Edit Trip")
+
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -56,6 +78,9 @@ struct AddTripView: View {
                             trip.destinationCountry = country
                             trip.startDate = startDate
                             trip.endDate = endDate
+                            trip.transportType = transportType.rawValue
+                            trip.originCity = originCity
+                            trip.noTransportReason = noTransportReason?.rawValue
                             viewModel.fetchTrips()
                         } else {
                             // Create new
@@ -64,7 +89,10 @@ struct AddTripView: View {
                                 city: city,
                                 country: country,
                                 startDate: startDate,
-                                endDate: endDate
+                                endDate: endDate,
+                                transportType: transportType.rawValue,
+                                originCity: originCity,
+                                noTransportReason: noTransportReason?.rawValue
                             )
                         }
                         dismiss()
@@ -73,4 +101,35 @@ struct AddTripView: View {
             }
         }
     }
+    
+
 }
+
+#if DEBUG
+import SwiftUI
+import CoreData
+
+struct AddTripView_Previews: PreviewProvider {
+    static var previews: some View {
+        let context = PersistenceController.preview.container.viewContext
+
+        let sampleTrip = Trip(context: context)
+        sampleTrip.setValue(UUID(), forKey: "id") // use KVC if direct assignment errors
+        sampleTrip.name = "Sample Conference"
+        sampleTrip.destinationCity = "New York"
+        sampleTrip.destinationCountry = "USA"
+        sampleTrip.startDate = Date()
+        sampleTrip.endDate = Calendar.current.date(byAdding: .day, value: 3, to: Date())
+
+        return Group {
+            AddTripView(viewModel: TripListViewModel())
+                .environment(\.managedObjectContext, context)
+                .previewDisplayName("Add Trip")
+
+            AddTripView(viewModel: TripListViewModel(), editingTrip: sampleTrip)
+                .environment(\.managedObjectContext, context)
+                .previewDisplayName("Edit Trip")
+        }
+    }
+}
+#endif
