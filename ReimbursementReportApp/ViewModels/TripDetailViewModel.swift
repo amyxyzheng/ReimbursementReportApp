@@ -11,7 +11,7 @@ import Combine
 
 class TripDetailViewModel: ObservableObject {
     @Published var receipts: [Receipt] = []
-    @Published var transportType: TransportType = .flight
+    @Published var transportType: TransportType = .flightTrain
     @Published var originCity: String = ""
     @Published var noTransportReason: NoTransportReason?
     @Published var eventStartDate: Date
@@ -28,7 +28,7 @@ class TripDetailViewModel: ObservableObject {
         self.eventStartDate = trip.startDate ?? Date()
         self.eventEndDate   = trip.endDate   ?? Date()
         fetchReceipts()
-        self.transportType = TransportType(rawValue: trip.transportType ?? "flight") ?? .flight
+        self.transportType = TransportType(rawValue: trip.transportType ?? "flight_train") ?? .flightTrain
         self.originCity = trip.originCity ?? ""
         self.noTransportReason = NoTransportReason(rawValue: trip.noTransportReason ?? "")
 
@@ -89,12 +89,11 @@ class TripDetailViewModel: ObservableObject {
 }
 
 enum TransportType: String, CaseIterable, Identifiable {
-    case flight, train, taxi, drive, notApplicable = "not_applicable"
+    case flightTrain = "flight_train", taxi, drive, notApplicable = "not_applicable"
     var id: String { rawValue }
     var displayName: String {
         switch self {
-        case .flight: return "Flight"
-        case .train: return "Train"
+        case .flightTrain: return "Flight/Train"
         case .taxi: return "Taxi"
         case .drive: return "Drive"
         case .notApplicable: return "Not Applicable"

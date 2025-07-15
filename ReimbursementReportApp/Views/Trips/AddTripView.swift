@@ -31,7 +31,7 @@ struct AddTripView: View {
         _country = State(initialValue: editingTrip?.destinationCountry ?? "")
         _startDate = State(initialValue: editingTrip?.startDate ?? Date())
         _endDate = State(initialValue: editingTrip?.endDate ?? Date())
-        _transportType = State(initialValue: TransportType(rawValue: editingTrip?.transportType ?? "flight") ?? .flight)
+        _transportType = State(initialValue: TransportType(rawValue: editingTrip?.transportType ?? "flight_train") ?? .flightTrain)
         _originCity = State(initialValue: editingTrip?.originCity ?? "")
         _noTransportReason = State(initialValue: NoTransportReason(rawValue: editingTrip?.noTransportReason ?? ""))
     }

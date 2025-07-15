@@ -10,78 +10,143 @@ import PhotosUI
 
 struct TripDetailView: View {
     @StateObject var vm: TripDetailViewModel
-    @State private var showingImagePicker = false
+    @State private var showingSourceDialog = false
     @State private var selectedReceiptCategory: ReceiptCategory = .transport
     @State private var selectedPhotoItem: PhotosPickerItem?
-
-    @State private var isTransportationExpanded = false
     @State private var pickerSource: PickerSource?
+    @State private var isTransportationExpanded = false
+
+    @State private var editableTripName: String = ""
+    @FocusState private var isEditingTripName: Bool
+    @State private var isEditingName: Bool = false
+
+    // Add state for help popups
+    // @State private var showTransportHelp = false
+    // @State private var showLocalTravelHelp = false
 
     var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        destinationHeader
-                        eventDateSection
-                        transportationSection
-                    }
-                    .padding(.bottom, 8)
-                }
-                .frame(height: geometry.size.height * 0.4) // Adjust as needed
-
-                receiptsSection
-                    .frame(height: geometry.size.height * 0.6) // Fill the rest
+        List {
+            Section {
+                destinationHeader
+                eventDateSection
+                transportationSection
             }
-            .navigationTitle(vm.trip.name ?? "Trip")
-            .navigationBarTitleDisplayMode(.inline)
-            .photosPicker(isPresented: $showingImagePicker,
-                          selection: $selectedPhotoItem,
-                          matching: .images)
-            .onChange(of: selectedPhotoItem) { newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        let receipt = Receipt(context: vm.context)
-                        receipt.id = UUID()
-                        receipt.date = Date()
-                        receipt.data = data
-                        receipt.type = newItem?.supportedContentTypes.first?.preferredMIMEType
-                        receipt.expenseCategory = selectedReceiptCategory.rawValue
-                        vm.addReceipt(receipt)
+            Section(header: receiptsSectionHeader) {
+                if vm.receipts.isEmpty {
+                    VStack {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 40))
+                            .foregroundColor(.gray)
+                        Text("No receipts yet")
+                            .foregroundColor(.secondary)
+                        Text("Receipt count: \(vm.receipts.count)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                } else {
+                    ForEach(vm.receipts, id: \.id) { receipt in
+                        NavigationLink(destination: ReceiptDetailView(receipt: receipt)) {
+                            HStack {
+                                Image(systemName: getReceiptIcon(for: receipt))
+                                    .foregroundColor(.blue)
+                                VStack(alignment: .leading) {
+                                    Text(ReceiptCategory(rawValue: receipt.expenseCategory ?? "")?.displayName ?? "Receipt")
+                                        .font(.subheadline)
+                                    if let date = receipt.date {
+                                        Text(date.formatted(.dateTime.month().day().year()))
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .onDelete(perform: vm.deleteReceipt)
                 }
-            }
-            .sheet(item: $pickerSource) { source in
-                ImagePicker(
-                    sourceType: source.sourceType,
-                    onImageSelected: { data, type in
-                        let receipt = Receipt(context: vm.context)
-                        receipt.id = UUID()
-                        receipt.date = Date()
-                        receipt.data = data
-                        receipt.type = type
-                        receipt.expenseCategory = selectedReceiptCategory.rawValue
-                        vm.addReceipt(receipt)
-                    },
-                    pickerSource: $pickerSource
-                )
             }
         }
+        .listStyle(InsetGroupedListStyle())
+        .confirmationDialog("Select Source", isPresented: $showingSourceDialog, titleVisibility: .visible) {
+            Button("Camera") {
+                selectedPhotoItem = nil // Clear previous selection
+                pickerSource = .camera
+            }
+            Button("Photo Library") {
+                selectedPhotoItem = nil // Clear previous selection
+                pickerSource = .photoLibrary
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(item: $pickerSource) { source in
+            ImagePicker(
+                sourceType: source.sourceType,
+                onImageSelected: { data, type in
+                    let receipt = Receipt(context: vm.context)
+                    receipt.id = UUID()
+                    receipt.date = Date()
+                    receipt.data = data
+                    receipt.type = type
+                    receipt.expenseCategory = selectedReceiptCategory.rawValue
+                    vm.addReceipt(receipt)
+                },
+                pickerSource: $pickerSource
+            )
+        }
+        .onAppear {
+            editableTripName = vm.trip.name ?? ""
+        }
+        // Remove .alert modifiers for help
     }
 
     private var destinationHeader: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(vm.trip.name ?? "Untitled Trip")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .lineLimit(nil)
-                .multilineTextAlignment(.leading)
-            
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                if isEditingName {
+                    TextEditor(text: $editableTripName)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .focused($isEditingTripName)
+                        .frame(minHeight: 44, maxHeight: 120)
+                        .padding(4)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(nil)
+                        .scrollContentBackground(.hidden)
+                    Button("Save") {
+                        vm.trip.name = editableTripName
+                        try? vm.context.save()
+                        vm.objectWillChange.send()
+                        isEditingName = false
+                        isEditingTripName = false
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 4)
+                } else {
+                    Text(vm.trip.name ?? "Untitled Trip")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(nil)
+                    Button("Edit") {
+                        editableTripName = vm.trip.name ?? ""
+                        isEditingName = true
+                        isEditingTripName = true
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 4)
+                }
+            }
             Text("Destination: \(vm.trip.destinationCity ?? "") \(vm.trip.destinationCountry ?? "")")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal)
+        .padding(.vertical, 4)
     }
 
     private var eventDateSection: some View {
@@ -96,7 +161,6 @@ struct TripDetailView: View {
                         .labelsHidden()
                         .onChange(of: vm.eventStartDate) { _ in vm.saveDates() }
                 }
-                
                 VStack(alignment: .leading) {
                     Text("End Date")
                         .font(.caption)
@@ -107,7 +171,7 @@ struct TripDetailView: View {
                 }
             }
         }
-        .padding(.horizontal)
+        .padding(.vertical, 4)
     }
 
     private var transportationSection: some View {
@@ -124,14 +188,12 @@ struct TripDetailView: View {
                         .foregroundColor(.blue)
                 }
             }
-            
             if isTransportationExpanded {
                 TransportationSelector(
                     transportType: Binding(
                         get: { vm.transportType },
                         set: { newType in
                             vm.setTransport(newType)
-                            // Only collapse if not selecting "Not Applicable"
                             if newType != .notApplicable {
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     isTransportationExpanded = false
@@ -145,7 +207,6 @@ struct TripDetailView: View {
                         set: { reason in
                             if let reason = reason {
                                 vm.setNoTransportReason(reason)
-                                // Now collapse after reason is selected
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     isTransportationExpanded = false
                                 }
@@ -155,7 +216,6 @@ struct TripDetailView: View {
                     isEditable: true
                 )
             } else {
-                // Show selected transport type when collapsed
                 HStack {
                     Text(vm.transportType.displayName)
                         .foregroundColor(.secondary)
@@ -169,26 +229,22 @@ struct TripDetailView: View {
                 .padding(.vertical, 4)
             }
         }
-        .padding(.horizontal)
+        .padding(.vertical, 4)
     }
 
-    private var receiptsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header and Add button
+    private var receiptsSectionHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("Receipts").font(.headline)
                 Spacer()
                 Menu {
                     ForEach(ReceiptCategory.allCases, id: \.rawValue) { category in
-                        Menu(category.displayName) {
-                            Button("Camera") {
-                                selectedReceiptCategory = category
-                                handleReceiptSelection(category: category, source: .camera)
-                            }
-                            Button("Photo Library") {
-                                selectedReceiptCategory = category
-                                showingImagePicker = true
-                            }
+                        Button(action: {
+                            selectedReceiptCategory = category
+                            selectedPhotoItem = nil // Clear previous selection
+                            showingSourceDialog = true
+                        }) {
+                            Text(category.displayName)
                         }
                     }
                 } label: {
@@ -202,69 +258,19 @@ struct TripDetailView: View {
                         .cornerRadius(6)
                 }
             }
-
-            if vm.receipts.isEmpty {
-                VStack {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 40))
-                        .foregroundColor(.gray)
-                    Text("No receipts yet")
-                        .foregroundColor(.secondary)
-                    Text("Receipt count: \(vm.receipts.count)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-            } else {
-                Text("Receipt count: \(vm.receipts.count)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                List {
-                    ForEach(vm.receipts, id: \.id) { receipt in
-                        NavigationLink(destination: ReceiptDetailView(receipt: receipt)) {
-                            HStack {
-                                Image(systemName: getReceiptIcon(for: receipt))
-                                    .foregroundColor(.blue)
-                                VStack(alignment: .leading) {
-                                    Text(receipt.expenseCategory?.capitalized ?? "Receipt")
-                                        .font(.subheadline)
-                                    if let date = receipt.date {
-                                        Text(date.formatted(.dateTime.month().day().year()))
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    .onDelete(perform: vm.deleteReceipt)
-                }
-                .listStyle(PlainListStyle())
-            }
+            Text("Receipt count: \(vm.receipts.count)")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
-        .padding(.horizontal)
-        .background(Color(.systemBackground))
     }
 
-
-    
     private func getReceiptIcon(for receipt: Receipt) -> String {
         guard let data = receipt.data else { return "doc.text" }
-        
         if UIImage(data: data) != nil {
             return "photo"
         } else {
             return "doc.text"
         }
-    }
-    
-    private func handleReceiptSelection(category: ReceiptCategory, source: PickerSource) {
-        selectedReceiptCategory = category
-        pickerSource = source
     }
 }
 
@@ -277,11 +283,11 @@ enum ReceiptCategory: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .transport:
-            return "Transport"
+            return "Transportation"
         case .hotel:
             return "Hotel"
         case .upgrade:
-            return "Upgrade"
+            return "Flight Upgrade"
         case .localTravel:
             return "Local Travel"
         }

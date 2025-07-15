@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct TripListView: View {
-    @StateObject var vm = TripListViewModel()
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Trip.startDate, ascending: false)],
+        animation: .default)
+    private var trips: FetchedResults<Trip>
     @State private var showingAdd = false
 
     var body: some View {
         NavigationView {
             List {
-                ForEach(vm.trips, id: \.id) { trip in
+                ForEach(trips, id: \.id) { trip in
                     NavigationLink(destination: TripDetailView(vm: TripDetailViewModel(trip: trip))) {
                         VStack(alignment: .leading) {
                             Text(trip.name ?? "(No Name)")
@@ -33,7 +38,7 @@ struct TripListView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .onDelete(perform: vm.deleteTrips)
+                .onDelete(perform: deleteTrips)
             }
             .navigationTitle("Trips")
             .toolbar {
@@ -42,8 +47,20 @@ struct TripListView: View {
                 }
             }
             .sheet(isPresented: $showingAdd) {
-                AddTripView(viewModel: vm)
+                AddTripView(viewModel: TripListViewModel(context: viewContext))
             }
+        }
+    }
+
+    private func deleteTrips(at offsets: IndexSet) {
+        for index in offsets {
+            let trip = trips[index]
+            viewContext.delete(trip)
+        }
+        do {
+            try viewContext.save()
+        } catch {
+            print("Failed to delete trip: \(error)")
         }
     }
 }

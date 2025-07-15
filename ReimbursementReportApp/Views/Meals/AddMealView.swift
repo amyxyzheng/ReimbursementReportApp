@@ -8,6 +8,19 @@
 import SwiftUI
 import PhotosUI
 
+enum PickerSource: Identifiable {
+    case camera, photoLibrary
+
+    var id: Int { hashValue }
+
+    var sourceType: UIImagePickerController.SourceType {
+        switch self {
+        case .camera: return .camera
+        case .photoLibrary: return .photoLibrary
+        }
+    }
+}
+
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismissAddMeal
     @ObservedObject var viewModel: MealListViewModel
@@ -19,6 +32,8 @@ struct AddMealView: View {
     @State private var imageData: Data?
     @State private var fileType: String
     @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var showingSourceDialog = false
+    @State private var pickerSource: PickerSource?
     
     init(viewModel: MealListViewModel, editingMeal: MealItem? = nil) {
         self.viewModel = viewModel
@@ -38,13 +53,33 @@ struct AddMealView: View {
                     TextField("Occasion", text: $occasion)
                 }
                 Section(header: Text("Upload Receipt")) {
-                    ReceiptPicker(
-                        selectedPhotoItem: $selectedPhotoItem,
-                        onImageSelected: { data, type in
-                            imageData = data
-                            fileType = type
+                    Button(action: { showingSourceDialog = true }) {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("Add Receipt Photo")
                         }
-                    )
+                    }
+                    .confirmationDialog("Add Receipt", isPresented: $showingSourceDialog, titleVisibility: .visible) {
+                        Button("Camera") {
+                            selectedPhotoItem = nil // Clear previous selection
+                            pickerSource = .camera
+                        }
+                        Button("Photo Library") {
+                            selectedPhotoItem = nil // Clear previous selection
+                            pickerSource = .photoLibrary
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    }
+                    .sheet(item: $pickerSource) { source in
+                        ImagePicker(
+                            sourceType: source.sourceType,
+                            onImageSelected: { data, type in
+                                imageData = data
+                                fileType = type
+                            },
+                            pickerSource: $pickerSource
+                        )
+                    }
                     if let data = imageData, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()

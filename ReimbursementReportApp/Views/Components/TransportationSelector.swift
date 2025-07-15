@@ -79,7 +79,7 @@ struct TransportationSelector: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         // Revert transport type if no reason selected
-                        transportType = .flight
+                        transportType = .flightTrain
                         noTransportReason = nil
                         showingReasonPrompt = false
                     }
@@ -97,7 +97,7 @@ struct TransportationSelector_Previews: PreviewProvider {
         VStack {
             Text("Editable")
             TransportationSelector(
-                transportType: .constant(.flight),
+                transportType: .constant(.flightTrain),
                 originCity: .constant(""),
                 noTransportReason: .constant(nil),
                 isEditable: true

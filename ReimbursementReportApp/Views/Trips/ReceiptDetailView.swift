@@ -34,8 +34,8 @@ struct ReceiptDetailView: View {
                     HStack {
                         Text("Category:")
                             .font(.headline)
-                        Text(receipt.expenseCategory?.capitalized ?? "Unknown")
-                            .foregroundColor(.secondary)
+                        Text(ReceiptCategory(rawValue: receipt.expenseCategory ?? "")?.displayName ?? "Receipt")
+                            .font(.subheadline)
                     }
                     
                     if let date = receipt.date {
