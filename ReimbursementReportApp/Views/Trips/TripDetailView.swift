@@ -18,49 +18,55 @@ struct TripDetailView: View {
     @State private var pickerSource: PickerSource?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                destinationHeader
-                eventDateSection
-                transportationSection
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        destinationHeader
+                        eventDateSection
+                        transportationSection
+                    }
+                    .padding(.bottom, 8)
+                }
+                .frame(height: geometry.size.height * 0.4) // Adjust as needed
+
                 receiptsSection
+                    .frame(height: geometry.size.height * 0.6) // Fill the rest
             }
-        }
-        .navigationTitle(vm.trip.name ?? "Trip")
-        .navigationBarTitleDisplayMode(.inline)
-        .photosPicker(isPresented: $showingImagePicker,
-                      selection: $selectedPhotoItem,
-                      matching: .images)
-        .onChange(of: selectedPhotoItem) { newItem in
-            Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    let receipt = Receipt(context: vm.context)
-                    receipt.id = UUID()
-                    receipt.date = Date()
-                    receipt.data = data
-                    receipt.type = newItem?.supportedContentTypes.first?.preferredMIMEType
-                    receipt.expenseCategory = selectedReceiptCategory.rawValue
-                    vm.addReceipt(receipt)
+            .navigationTitle(vm.trip.name ?? "Trip")
+            .navigationBarTitleDisplayMode(.inline)
+            .photosPicker(isPresented: $showingImagePicker,
+                          selection: $selectedPhotoItem,
+                          matching: .images)
+            .onChange(of: selectedPhotoItem) { newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                        let receipt = Receipt(context: vm.context)
+                        receipt.id = UUID()
+                        receipt.date = Date()
+                        receipt.data = data
+                        receipt.type = newItem?.supportedContentTypes.first?.preferredMIMEType
+                        receipt.expenseCategory = selectedReceiptCategory.rawValue
+                        vm.addReceipt(receipt)
+                    }
                 }
             }
+            .sheet(item: $pickerSource) { source in
+                ImagePicker(
+                    sourceType: source.sourceType,
+                    onImageSelected: { data, type in
+                        let receipt = Receipt(context: vm.context)
+                        receipt.id = UUID()
+                        receipt.date = Date()
+                        receipt.data = data
+                        receipt.type = type
+                        receipt.expenseCategory = selectedReceiptCategory.rawValue
+                        vm.addReceipt(receipt)
+                    },
+                    pickerSource: $pickerSource
+                )
+            }
         }
-        .sheet(item: $pickerSource) { source in
-            ImagePicker(
-                sourceType: source.sourceType,
-                onImageSelected: { data, type in
-                    let receipt = Receipt(context: vm.context)
-                    receipt.id = UUID()
-                    receipt.date = Date()
-                    receipt.data = data
-                    receipt.type = type
-                    receipt.expenseCategory = selectedReceiptCategory.rawValue
-                    vm.addReceipt(receipt)
-                },
-                pickerSource: $pickerSource
-            )
-        }
-
-
     }
 
     private var destinationHeader: some View {
@@ -168,6 +174,7 @@ struct TripDetailView: View {
 
     private var receiptsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Header and Add button
             HStack {
                 Text("Receipts").font(.headline)
                 Spacer()
@@ -176,7 +183,6 @@ struct TripDetailView: View {
                         Menu(category.displayName) {
                             Button("Camera") {
                                 selectedReceiptCategory = category
-                                // Handle camera selection
                                 handleReceiptSelection(category: category, source: .camera)
                             }
                             Button("Photo Library") {
@@ -196,7 +202,7 @@ struct TripDetailView: View {
                         .cornerRadius(6)
                 }
             }
-            
+
             if vm.receipts.isEmpty {
                 VStack {
                     Image(systemName: "doc.text")
@@ -214,7 +220,7 @@ struct TripDetailView: View {
                 Text("Receipt count: \(vm.receipts.count)")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                VStack(spacing: 8) {
+                List {
                     ForEach(vm.receipts, id: \.id) { receipt in
                         NavigationLink(destination: ReceiptDetailView(receipt: receipt)) {
                             HStack {
@@ -231,16 +237,17 @@ struct TripDetailView: View {
                                 }
                                 Spacer()
                             }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
+                            .padding(.vertical, 4)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
+                    .onDelete(perform: vm.deleteReceipt)
                 }
+                .listStyle(PlainListStyle())
             }
         }
         .padding(.horizontal)
+        .background(Color(.systemBackground))
     }
 
 
