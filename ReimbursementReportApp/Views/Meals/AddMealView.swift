@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismissAddMeal
@@ -17,7 +18,7 @@ struct AddMealView: View {
     @State private var occasion: String
     @State private var imageData: Data?
     @State private var fileType: String
-    @State private var pickerSource: PickerSource? = nil
+    @State private var selectedPhotoItem: PhotosPickerItem?
     
     init(viewModel: MealListViewModel, editingMeal: MealItem? = nil) {
         self.viewModel = viewModel
@@ -37,23 +38,13 @@ struct AddMealView: View {
                     TextField("Occasion", text: $occasion)
                 }
                 Section(header: Text("Upload Receipt")) {
-                    HStack {
-                        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                            Button(action: {
-                                        pickerSource = .camera
-                                    }) {
-                                Label("Take Photo", systemImage: "camera")
-                            }
-                            .buttonStyle(.bordered)
+                    ReceiptPicker(
+                        selectedPhotoItem: $selectedPhotoItem,
+                        onImageSelected: { data, type in
+                            imageData = data
+                            fileType = type
                         }
-                        Spacer()
-                        Button(action: {
-                                pickerSource = .photoLibrary
-                            }) {
-                            Label("Select Photo", systemImage: "photo")
-                        }
-                        .buttonStyle(.bordered)
-                    }
+                    )
                     if let data = imageData, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
@@ -90,73 +81,6 @@ struct AddMealView: View {
                     }
                 }
             }
-            .sheet(item: $pickerSource) { source in
-                ImagePicker(
-                    sourceType: source.sourceType,
-                    imageData: $imageData,
-                    fileType: $fileType,
-                    pickerSource: $pickerSource
-                )
-            }
-        }
-    }
-}
-
-enum PickerSource: Identifiable {
-    case camera, photoLibrary
-
-    var id: Int { hashValue }
-
-    var sourceType: UIImagePickerController.SourceType {
-        switch self {
-        case .camera: return .camera
-        case .photoLibrary: return .photoLibrary
-        }
-    }
-}
-
-
-// UIImagePickerController wrapper
-struct ImagePicker: UIViewControllerRepresentable {
-    var sourceType: UIImagePickerController.SourceType
-    @Binding var imageData: Data?
-    @Binding var fileType: String
-    @Binding var pickerSource: PickerSource?
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        /*
-        let picker = UIImagePickerController()
-        picker.sourceType = sourceType
-        picker.delegate = context.coordinator
-        return picker
-         */
-        print("Using sourceType:", sourceType.rawValue) // 1 = camera, 0 = photo library
-            let picker = UIImagePickerController()
-            picker.sourceType = sourceType
-            picker.delegate = context.coordinator
-            return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: ImagePicker
-        init(_ parent: ImagePicker) { self.parent = parent }
-
-        func imagePickerController(_ picker: UIImagePickerController,
-                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let uiImage = info[.originalImage] as? UIImage,
-               let data = uiImage.jpegData(compressionQuality: 0.8) {
-                parent.imageData = data
-                parent.fileType = "image/jpeg"
-            }
-            parent.pickerSource = nil
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.pickerSource = nil
         }
     }
 }

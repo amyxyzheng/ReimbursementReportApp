@@ -15,6 +15,7 @@ struct TripDetailView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
 
     @State private var isTransportationExpanded = false
+    @State private var pickerSource: PickerSource?
 
     var body: some View {
         ScrollView {
@@ -42,6 +43,21 @@ struct TripDetailView: View {
                     vm.addReceipt(receipt)
                 }
             }
+        }
+        .sheet(item: $pickerSource) { source in
+            ImagePicker(
+                sourceType: source.sourceType,
+                onImageSelected: { data, type in
+                    let receipt = Receipt(context: vm.context)
+                    receipt.id = UUID()
+                    receipt.date = Date()
+                    receipt.data = data
+                    receipt.type = type
+                    receipt.expenseCategory = selectedReceiptCategory.rawValue
+                    vm.addReceipt(receipt)
+                },
+                pickerSource: $pickerSource
+            )
         }
 
 
@@ -157,9 +173,16 @@ struct TripDetailView: View {
                 Spacer()
                 Menu {
                     ForEach(ReceiptCategory.allCases, id: \.rawValue) { category in
-                        Button(category.displayName) {
-                            selectedReceiptCategory = category
-                            showingImagePicker = true
+                        Menu(category.displayName) {
+                            Button("Camera") {
+                                selectedReceiptCategory = category
+                                // Handle camera selection
+                                handleReceiptSelection(category: category, source: .camera)
+                            }
+                            Button("Photo Library") {
+                                selectedReceiptCategory = category
+                                showingImagePicker = true
+                            }
                         }
                     }
                 } label: {
@@ -230,6 +253,11 @@ struct TripDetailView: View {
         } else {
             return "doc.text"
         }
+    }
+    
+    private func handleReceiptSelection(category: ReceiptCategory, source: PickerSource) {
+        selectedReceiptCategory = category
+        pickerSource = source
     }
 }
 
