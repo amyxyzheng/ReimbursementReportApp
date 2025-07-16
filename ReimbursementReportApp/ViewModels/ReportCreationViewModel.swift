@@ -97,7 +97,7 @@ class ReportCreationViewModel: ObservableObject {
         }
     }
     
-    func generateReport() -> Bool {
+    func generateReport(mileage: String? = nil) -> Bool {
         let selectedIDs = items.filter { $0.isSelected }.map { $0.id.uuidString }
         let includedItemIDs = selectedIDs as NSArray
         
@@ -146,7 +146,7 @@ class ReportCreationViewModel: ObservableObject {
                     errorMessage = "Trip not found."
                     return false
                 }
-                let (summary, zipData, errorMsg) = ReportGenerator.generateTripReport(trips: [trip])
+                let (summary, zipData, errorMsg) = ReportGenerator.generateTripReport(trips: [trip], mileage: mileage)
                 if let errorMsg = errorMsg {
                     errorMessage = errorMsg
                     return false

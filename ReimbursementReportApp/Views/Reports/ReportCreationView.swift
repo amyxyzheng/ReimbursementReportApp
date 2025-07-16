@@ -6,6 +6,11 @@ struct ReportCreationView: View {
     @StateObject private var viewModel: ReportCreationViewModel
     @Environment(\.dismiss) private var dismiss
     
+    // Mileage prompt state
+    @State private var showMileagePrompt = false
+    @State private var mileageInput: String = ""
+    @State private var pendingReportAction: (() -> Void)? = nil
+    
     init() {
         let context = PersistenceController.shared.container.viewContext // fallback for preview
         _viewModel = StateObject(wrappedValue: ReportCreationViewModel(context: context))
@@ -30,13 +35,13 @@ struct ReportCreationView: View {
                                 CustomDatePicker(title: "Start", date: Binding(
                                     get: { viewModel.dateRange.lowerBound },
                                     set: { viewModel.dateRange = $0...viewModel.dateRange.upperBound }
-                                ), displayedComponents: .date)
+                                ))
                             }
                             VStack(alignment: .leading) {
                                 CustomDatePicker(title: "End", date: Binding(
                                     get: { viewModel.dateRange.upperBound },
                                     set: { viewModel.dateRange = viewModel.dateRange.lowerBound...$0 }
-                                ), displayedComponents: .date)
+                                ))
                             }
                         }
                     }
@@ -83,8 +88,22 @@ struct ReportCreationView: View {
                 
                 Section {
                     Button(action: {
-                        if viewModel.generateReport() {
-                            dismiss()
+                        // Check if trip report and Drive is selected
+                        if viewModel.selectedType == .trip,
+                           let trip = viewModel.selectedTrip(context: context),
+                           trip.transportType == "drive" {
+                            // Show mileage prompt
+                            showMileagePrompt = true
+                            mileageInput = ""
+                            pendingReportAction = {
+                                if viewModel.generateReport(mileage: mileageInput) {
+                                    dismiss()
+                                }
+                            }
+                        } else {
+                            if viewModel.generateReport(mileage: nil) {
+                                dismiss()
+                            }
                         }
                     }) {
                         Text("Generate Report")
@@ -103,6 +122,32 @@ struct ReportCreationView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .sheet(isPresented: $showMileagePrompt) {
+                VStack(spacing: 20) {
+                    Text("Enter round-trip mileage for this trip:")
+                        .font(.headline)
+                    TextField("Mileage", text: $mileageInput)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 200)
+                    HStack {
+                        Button("Cancel") {
+                            showMileagePrompt = false
+                            pendingReportAction = nil
+                        }
+                        .padding()
+                        Button("OK") {
+                            showMileagePrompt = false
+                            pendingReportAction?()
+                            pendingReportAction = nil
+                        }
+                        .padding()
+                        .disabled(mileageInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                .padding()
+                .presentationDetents([.medium])
+            }
         }
     }
     
@@ -112,6 +157,16 @@ struct ReportCreationView: View {
         request.predicate = NSPredicate(format: "id == %@", itemID as CVarArg)
         request.fetchLimit = 1
         return try? context.fetch(request).first
+    }
+}
+
+extension ReportCreationViewModel {
+    func selectedTrip(context: NSManagedObjectContext) -> Trip? {
+        guard selectedType == .trip, let selectedID = items.first(where: { $0.isSelected })?.id else { return nil }
+        let request: NSFetchRequest<Trip> = Trip.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", selectedID as CVarArg)
+        request.fetchLimit = 1
+        return (try? context.fetch(request))?.first
     }
 }
 

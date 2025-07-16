@@ -43,32 +43,36 @@ struct PerDiemCalculator {
             return nil
         }
         
+        let calendar = Calendar.current
+        // Normalize all dates to midnight
+        let tripStart = calendar.startOfDay(for: tripStartDate)
+        let tripEnd = calendar.startOfDay(for: tripEndDate)
         let eventStartDate = trip.eventStartDate ?? tripStartDate
         let eventEndDate = trip.eventEndDate ?? tripEndDate
+        let eventStart = calendar.startOfDay(for: eventStartDate)
+        let eventEnd = calendar.startOfDay(for: eventEndDate)
         
         // Validate that event dates are within trip dates
-        guard eventStartDate >= tripStartDate && eventEndDate <= tripEndDate else {
+        guard eventStart >= tripStart && eventEnd <= tripEnd else {
             return nil // Invalid event dates
         }
         
         var travelDayDates: [Date] = []
         var eventDayDates: [Date] = []
-        let calendar = Calendar.current
         
-        // Event days: all days from eventStartDate to eventEndDate (inclusive)
-        eventDayDates = generateDateRange(from: eventStartDate, to: eventEndDate)
+        // Event days: all days from eventStart to eventEnd (inclusive)
+        eventDayDates = generateDateRange(from: eventStart, to: eventEnd)
         
         // Travel day: trip start day if before event start
-        if tripStartDate < eventStartDate {
-            travelDayDates.append(tripStartDate)
+        if tripStart < eventStart {
+            travelDayDates.append(tripStart)
         }
         // Travel day: trip end day if after event end
-        if tripEndDate > eventEndDate {
-            travelDayDates.append(tripEndDate)
+        if tripEnd > eventEnd {
+            travelDayDates.append(tripEnd)
         }
         
-        let dateRange = "\(tripStartDate.formatted()) to \(tripEndDate.formatted())"
-        // Remove the unused totalDays variable
+        let dateRange = "\(tripStart.formatted()) to \(tripEnd.formatted())"
         
         return PerDiemInfo(
             destinationCity: destinationCity,

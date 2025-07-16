@@ -99,7 +99,7 @@ struct ReportGenerator {
         }
     }
     
-    static func generateTripReport(trips: [Trip]) -> (summary: String?, zipData: Data?, errorMessage: String?) {
+    static func generateTripReport(trips: [Trip], mileage: String? = nil) -> (summary: String?, zipData: Data?, errorMessage: String?) {
         // Only support single-trip reports for now
         guard let trip = trips.first else {
             return (nil, nil, "No trip selected.")
@@ -111,12 +111,18 @@ struct ReportGenerator {
         summaryLines.append("Trip Expenses Report - \(tripName)")
         
         // Add per diem information
+        var perDiemSection = ""
         if let perDiemInfo = PerDiemCalculator.calculatePerDiem(for: trip) {
             // Replace summary header and destination label
-            let perDiemSummary = perDiemInfo.summary
+            perDiemSection = perDiemInfo.summary
                 .replacingOccurrences(of: "Per Diem Summary", with: "Per Diem Reimbursement Request")
                 .replacingOccurrences(of: "Destination:", with: "Location:")
-            summaryLines.append("\n" + perDiemSummary)
+            summaryLines.append("\n" + perDiemSection)
+        }
+        
+        // If drive and mileage provided, add mileage line after per diem
+        if trip.transportType == "drive", let mileage = mileage, !mileage.trimmingCharacters(in: .whitespaces).isEmpty {
+            summaryLines.append("Mileage reimbursement: \(mileage) miles")
         }
         
         // Add receipts section header

@@ -45,13 +45,7 @@ struct TransportationSelector: View {
                     }
                 }
             }
-            
-            if transportType == .drive {
-                TextField("Origin City", text: $originCity)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.top, 8)
-                    .disabled(!isEditable)
-            }
+            // Origin city input removed for all types
         }
         .sheet(isPresented: $showingReasonPrompt) {
             reasonPromptSheet
