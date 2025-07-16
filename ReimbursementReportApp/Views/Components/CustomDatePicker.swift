@@ -51,6 +51,10 @@ struct CustomDatePicker: View {
                 .datePickerStyle(.graphical)
                 .labelsHidden()
                 .padding()
+                .onChange(of: tempDate) { newValue in
+                    date = newValue
+                    showingDatePicker = false
+                }
                 Button("Done") {
                     date = tempDate
                     showingDatePicker = false
