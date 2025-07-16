@@ -68,12 +68,12 @@ struct PerDiemCalculator {
         }
         
         let dateRange = "\(tripStartDate.formatted()) to \(tripEndDate.formatted())"
-        let totalDays = calendar.dateComponents([.day], from: tripStartDate, to: tripEndDate).day ?? 0 + 1
+        // Remove the unused totalDays variable
         
         return PerDiemInfo(
             destinationCity: destinationCity,
             destinationCountry: destinationCountry,
-            totalDays: totalDays,
+            totalDays: travelDayDates.count + eventDayDates.count,
             travelDays: travelDayDates.count,
             eventDays: eventDayDates.count,
             dateRange: dateRange,
