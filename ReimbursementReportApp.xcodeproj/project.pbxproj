@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EACCDB032E26F2280085A0FD /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = EACCDB022E26F2280085A0FD /* ZIPFoundation */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		EA290CA32E23691E00A285F6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -75,6 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EACCDB032E26F2280085A0FD /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +138,7 @@
 			);
 			name = ReimbursementReportApp;
 			packageProductDependencies = (
+				EACCDB022E26F2280085A0FD /* ZIPFoundation */,
 			);
 			productName = ReimbursementReportApp;
 			productReference = EA290C8E2E23691C00A285F6 /* ReimbursementReportApp.app */;
@@ -210,6 +216,9 @@
 			);
 			mainGroup = EA290C852E23691C00A285F6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EACCDB012E26F2280085A0FD /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA290C8F2E23691C00A285F6 /* Products */;
 			projectDirPath = "";
@@ -614,6 +623,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EACCDB012E26F2280085A0FD /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EACCDB022E26F2280085A0FD /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EACCDB012E26F2280085A0FD /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EA290C862E23691C00A285F6 /* Project object */;
 }

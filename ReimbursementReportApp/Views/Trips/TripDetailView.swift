@@ -154,20 +154,31 @@ struct TripDetailView: View {
             Text("Event Dates").font(.headline)
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Start Date")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    DatePicker("", selection: $vm.eventStartDate, displayedComponents: .date)
-                        .labelsHidden()
-                        .onChange(of: vm.eventStartDate) { _ in vm.saveDates() }
+                    // Option 1: Sheet-based date picker with Done/Cancel buttons
+                    CustomDatePicker(
+                        title: "Start Date",
+                        date: Binding(
+                            get: { vm.eventStartDate },
+                            set: { 
+                                vm.eventStartDate = $0
+                                vm.saveDates()
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
                 }
                 VStack(alignment: .leading) {
-                    Text("End Date")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    DatePicker("", selection: $vm.eventEndDate, displayedComponents: .date)
-                        .labelsHidden()
-                        .onChange(of: vm.eventEndDate) { _ in vm.saveDates() }
+                    CustomDatePicker(
+                        title: "End Date",
+                        date: Binding(
+                            get: { vm.eventEndDate },
+                            set: { 
+                                vm.eventEndDate = $0
+                                vm.saveDates()
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
                 }
             }
         }

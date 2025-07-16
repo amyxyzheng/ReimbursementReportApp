@@ -49,7 +49,7 @@ struct AddMealView: View {
         NavigationStack {
             Form {
                 Section(header: Text("Date & Occasion")) {
-                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                    CustomDatePicker(title: "Date", date: $date, displayedComponents: .date)
                     TextField("Occasion", text: $occasion)
                 }
                 Section(header: Text("Upload Receipt")) {

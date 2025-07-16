@@ -48,8 +48,14 @@ struct AddTripView: View {
                         }
                     TextField("City", text: $city)
                     TextField("Country", text: $country)
-                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            CustomDatePicker(title: "Start Date", date: $startDate, displayedComponents: .date)
+                        }
+                        VStack(alignment: .leading) {
+                            CustomDatePicker(title: "End Date", date: $endDate, displayedComponents: .date)
+                        }
+                    }
                 }
                 
                 Section("Transportation") {

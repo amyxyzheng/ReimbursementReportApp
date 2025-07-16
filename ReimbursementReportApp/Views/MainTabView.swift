@@ -12,7 +12,14 @@ struct MainTabView: View {
         TabView {
             MealListView().tabItem { Label("Meals", systemImage: "fork.knife") }
             TripListView().tabItem { Label("Trips", systemImage: "airplane") }
-            //ReportView().tabItem { Label("Report", systemImage: "doc.text") }
+            ReportsListView().tabItem { Label("Reports", systemImage: "doc.text") }
         }
+    }
+}
+
+struct MainTabView_Previews: PreviewProvider {
+    static var previews: some View {
+        MainTabView()
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
 }
