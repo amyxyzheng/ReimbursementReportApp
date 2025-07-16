@@ -17,6 +17,8 @@ struct AddTripView: View {
     @State private var country: String
     @State private var startDate: Date
     @State private var endDate: Date
+    @State private var eventStartDate: Date
+    @State private var eventEndDate: Date
     @State private var transportType: TransportType
     @State private var originCity: String
     @State private var noTransportReason: NoTransportReason?
@@ -31,6 +33,9 @@ struct AddTripView: View {
         _country = State(initialValue: editingTrip?.destinationCountry ?? "")
         _startDate = State(initialValue: editingTrip?.startDate ?? Date())
         _endDate = State(initialValue: editingTrip?.endDate ?? Date())
+        // For new trips, set event dates equal to trip dates initially
+        _eventStartDate = State(initialValue: editingTrip?.eventStartDate ?? editingTrip?.startDate ?? Date())
+        _eventEndDate = State(initialValue: editingTrip?.eventEndDate ?? editingTrip?.endDate ?? Date())
         _transportType = State(initialValue: TransportType(rawValue: editingTrip?.transportType ?? "flight_train") ?? .flightTrain)
         _originCity = State(initialValue: editingTrip?.originCity ?? "")
         _noTransportReason = State(initialValue: NoTransportReason(rawValue: editingTrip?.noTransportReason ?? ""))
@@ -84,18 +89,22 @@ struct AddTripView: View {
                             trip.destinationCountry = country
                             trip.startDate = startDate
                             trip.endDate = endDate
+                            trip.eventStartDate = eventStartDate
+                            trip.eventEndDate = eventEndDate
                             trip.transportType = transportType.rawValue
                             trip.originCity = originCity
                             trip.noTransportReason = noTransportReason?.rawValue
                             viewModel.fetchTrips()
                         } else {
-                            // Create new
-                            viewModel.addTrip(
+                            // Create new trip - set event dates equal to trip dates initially
+                            viewModel.createTrip(
                                 name: name,
                                 city: city,
                                 country: country,
                                 startDate: startDate,
                                 endDate: endDate,
+                                eventStartDate: startDate,
+                                eventEndDate: endDate,
                                 transportType: transportType.rawValue,
                                 originCity: originCity,
                                 noTransportReason: noTransportReason?.rawValue

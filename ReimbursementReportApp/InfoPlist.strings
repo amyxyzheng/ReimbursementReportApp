@@ -1,0 +1,8 @@
+/* 
+  InfoPlist.strings
+  ReimbursementReportApp
+  
+  Localized display name for the app
+*/
+
+"CFBundleDisplayName" = "Reimbursement Report"; 

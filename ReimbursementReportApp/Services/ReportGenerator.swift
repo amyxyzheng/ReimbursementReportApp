@@ -106,14 +106,29 @@ struct ReportGenerator {
         }
         let tripName = trip.name ?? "Trip"
         let tripReceipts = (trip.receipts as? Set<Receipt>) ?? []
-        guard let minDate = tripReceipts.compactMap({ $0.date }).min(),
-              let maxDate = tripReceipts.compactMap({ $0.date }).max(),
-              !tripReceipts.isEmpty else {
-            return (nil, nil, "No receipts to report for this trip.")
-        }
+        
         var summaryLines: [String] = []
         summaryLines.append("Trip Expenses Report - \(tripName)")
-        summaryLines.append("Date Range: \(formatDate(minDate)) to \(formatDate(maxDate))\n")
+        
+        // Add per diem information
+        if let perDiemInfo = PerDiemCalculator.calculatePerDiem(for: trip) {
+            // Replace summary header and destination label
+            let perDiemSummary = perDiemInfo.summary
+                .replacingOccurrences(of: "Per Diem Summary", with: "Per Diem Reimbursement Request")
+                .replacingOccurrences(of: "Destination:", with: "Location:")
+            summaryLines.append("\n" + perDiemSummary)
+        }
+        
+        // Add receipts section header
+        summaryLines.append("\nReceipts for reimbursements")
+        
+        // Sort receipts by category
+        let sortedReceipts = tripReceipts.sorted { (a, b) in
+            let catA = a.expenseCategory ?? ""
+            let catB = b.expenseCategory ?? ""
+            return catA.localizedCaseInsensitiveCompare(catB) == .orderedAscending
+        }
+        
         var receiptCount = 0
         // Create a temporary file for the ZIP
         let tempDir = FileManager.default.temporaryDirectory
@@ -123,7 +138,7 @@ struct ReportGenerator {
                 print("[DEBUG] Failed to create ZIP archive at URL: \(zipURL)")
                 return (nil, nil, "Failed to create ZIP archive.")
             }
-            for receipt in tripReceipts {
+            for receipt in sortedReceipts {
                 guard let id = receipt.id, let date = receipt.date else { continue }
                 let categoryRaw = receipt.expenseCategory ?? "Receipt"
                 let displayCategory = ReceiptCategory(rawValue: categoryRaw)?.displayName ?? categoryRaw
@@ -138,14 +153,14 @@ struct ReportGenerator {
                         })
                     } catch {
                         print("[DEBUG] Error zipping \(filename): \(error)")
-                        let msg = "Failed to add receipt [\(displayCategory)] on \(formatDate(date)). Please check the receipt image and try again."
+                        let msg = "Failed to add receipt [\(displayCategory)] on \(date.formatted(date: .numeric, time: .omitted)). Please check the receipt image and try again."
                         return (nil, nil, msg)
                     }
                 } else {
-                    let msg = "No receipt data for [\(displayCategory)] on \(formatDate(date)). Please check the receipt image and try again."
+                    let msg = "No receipt data for [\(displayCategory)] on \(date.formatted(date: .numeric, time: .omitted)). Please check the receipt image and try again."
                     return (nil, nil, msg)
                 }
-                summaryLines.append("• \(displayCategory) on \(formatDate(date)) — Receipt: \(filename)")
+                summaryLines.append("• \(displayCategory): \(filename)")
                 receiptCount += 1
             }
             // Read ZIP data from file

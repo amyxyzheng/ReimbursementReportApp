@@ -8,32 +8,26 @@
 import SwiftUI
 
 struct CustomDatePicker: View {
-    @Binding var date: Date
     let title: String
-    let displayedComponents: DatePickerComponents
-    
+    @Binding var date: Date
+    var displayedComponents: DatePickerComponents = .date
+    var minDate: Date? = nil
+    var maxDate: Date? = nil
+
     @State private var showingDatePicker = false
-    @State private var tempDate: Date
-    
-    init(title: String, date: Binding<Date>, displayedComponents: DatePickerComponents = .date) {
-        self.title = title
-        self._date = date
-        self.displayedComponents = displayedComponents
-        self._tempDate = State(initialValue: date.wrappedValue)
-    }
-    
+    @State private var tempDate: Date = Date()
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
             Button(action: {
                 tempDate = date
                 showingDatePicker = true
             }) {
                 HStack {
-                    Text(date.formatted(date: .abbreviated, time: displayedComponents.contains(.hourAndMinute) ? .shortened : .omitted))
+                    Text(date.formatted(date: .abbreviated, time: displayedComponents == .date ? .omitted : .shortened))
                         .foregroundColor(.primary)
                     Spacer()
                     Image(systemName: "calendar")
@@ -51,15 +45,17 @@ struct CustomDatePicker: View {
                 DatePicker(
                     title,
                     selection: $tempDate,
+                    in: (minDate ?? Date.distantPast)...(maxDate ?? Date.distantFuture),
                     displayedComponents: displayedComponents
                 )
                 .datePickerStyle(.graphical)
                 .labelsHidden()
                 .padding()
-                .onChange(of: tempDate) { newValue in
-                    date = newValue
+                Button("Done") {
+                    date = tempDate
                     showingDatePicker = false
                 }
+                .padding(.top)
                 Spacer()
             }
             .presentationDetents([.medium])

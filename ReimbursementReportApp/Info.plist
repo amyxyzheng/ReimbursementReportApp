@@ -8,5 +8,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>ExpenseHub</string>
 </dict>
 </plist>

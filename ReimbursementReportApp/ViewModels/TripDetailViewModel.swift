@@ -25,8 +25,8 @@ class TripDetailViewModel: ObservableObject {
          context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
         self.trip = trip
         self.context = context
-        self.eventStartDate = trip.startDate ?? Date()
-        self.eventEndDate   = trip.endDate   ?? Date()
+        self.eventStartDate = trip.eventStartDate ?? trip.startDate ?? Date()
+        self.eventEndDate   = trip.eventEndDate ?? trip.endDate ?? Date()
         fetchReceipts()
         self.transportType = TransportType(rawValue: trip.transportType ?? "flight_train") ?? .flightTrain
         self.originCity = trip.originCity ?? ""
@@ -73,16 +73,17 @@ class TripDetailViewModel: ObservableObject {
     }
     
     func saveDates() {
-        trip.startDate = eventStartDate
-        trip.endDate   = eventEndDate
+        // No need for error handling, picker constrains values
+        trip.eventStartDate = eventStartDate
+        trip.eventEndDate = eventEndDate
         do { try context.save() }
         catch { print("Failed to save dates:", error) }
     }
-
+    
     private func saveContext() {
         do {
-            trip.startDate = eventStartDate
-            trip.endDate = eventEndDate
+            trip.eventStartDate = eventStartDate
+            trip.eventEndDate = eventEndDate
             try context.save()
         } catch { print("Save error: \(error)") }
     }

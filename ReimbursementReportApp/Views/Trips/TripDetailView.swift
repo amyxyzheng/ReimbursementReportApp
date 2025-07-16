@@ -29,6 +29,7 @@ struct TripDetailView: View {
             Section {
                 destinationHeader
                 eventDateSection
+                perDiemSection
                 transportationSection
             }
             Section(header: receiptsSectionHeader) {
@@ -113,7 +114,11 @@ struct TripDetailView: View {
                         .focused($isEditingTripName)
                         .frame(minHeight: 44, maxHeight: 120)
                         .padding(4)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 1)
+                                .opacity(0.3)
+                        )
                         .multilineTextAlignment(.leading)
                         .lineLimit(nil)
                         .scrollContentBackground(.hidden)
@@ -145,6 +150,11 @@ struct TripDetailView: View {
             Text("Destination: \(vm.trip.destinationCity ?? "") \(vm.trip.destinationCountry ?? "")")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+            if let start = vm.trip.startDate, let end = vm.trip.endDate {
+                Text("Trip Dates: \(start.formatted(date: .numeric, time: .omitted)) to \(end.formatted(date: .numeric, time: .omitted))")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
@@ -152,34 +162,77 @@ struct TripDetailView: View {
     private var eventDateSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Event Dates").font(.headline)
-            HStack {
-                VStack(alignment: .leading) {
-                    // Option 1: Sheet-based date picker with Done/Cancel buttons
-                    CustomDatePicker(
-                        title: "Start Date",
-                        date: Binding(
-                            get: { vm.eventStartDate },
-                            set: { 
-                                vm.eventStartDate = $0
-                                vm.saveDates()
-                            }
-                        ),
-                        displayedComponents: .date
-                    )
+            
+            if let tripStartDate = vm.trip.startDate,
+               let tripEndDate = vm.trip.endDate {
+                HStack {
+                    VStack(alignment: .leading) {
+                        CustomDatePicker(
+                            title: "Start Date",
+                            date: Binding(
+                                get: { vm.eventStartDate },
+                                set: { 
+                                    vm.eventStartDate = $0
+                                    vm.saveDates()
+                                }
+                            ),
+                            displayedComponents: .date,
+                            minDate: tripStartDate,
+                            maxDate: vm.eventEndDate
+                        )
+                    }
+                    VStack(alignment: .leading) {
+                        CustomDatePicker(
+                            title: "End Date",
+                            date: Binding(
+                                get: { vm.eventEndDate },
+                                set: { 
+                                    vm.eventEndDate = $0
+                                    vm.saveDates()
+                                }
+                            ),
+                            displayedComponents: .date,
+                            minDate: vm.eventStartDate,
+                            maxDate: tripEndDate
+                        )
+                    }
                 }
-                VStack(alignment: .leading) {
-                    CustomDatePicker(
-                        title: "End Date",
-                        date: Binding(
-                            get: { vm.eventEndDate },
-                            set: { 
-                                vm.eventEndDate = $0
-                                vm.saveDates()
-                            }
-                        ),
-                        displayedComponents: .date
-                    )
+            } else {
+                Text("Trip dates not available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var perDiemSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Per Diem Summary").font(.headline)
+            if let perDiemInfo = PerDiemCalculator.calculatePerDiem(for: vm.trip) {
+                VStack(alignment: .leading, spacing: 4) {
+                    if perDiemInfo.travelDays > 0 {
+                        let travelDates = perDiemInfo.travelDayDates.map { $0.formatted(date: .numeric, time: .omitted) }.joined(separator: ", ")
+                        (
+                            Text("Travel Days: ") +
+                            Text("\(perDiemInfo.travelDays)").foregroundColor(.orange) +
+                            Text(" (\(travelDates))")
+                        )
+                        .font(.subheadline)
+                    }
+                    if let eventStart = perDiemInfo.eventDayDates.first, let eventEnd = perDiemInfo.eventDayDates.last {
+                        (
+                            Text("Event Days: ") +
+                            Text("\(perDiemInfo.eventDays)").foregroundColor(.green) +
+                            Text(" (\(eventStart.formatted(date: .numeric, time: .omitted)) to \(eventEnd.formatted(date: .numeric, time: .omitted)))")
+                        )
+                        .font(.subheadline)
+                    }
                 }
+            } else {
+                Text("Unable to calculate per diem information")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 4)

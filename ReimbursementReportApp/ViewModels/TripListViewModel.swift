@@ -48,7 +48,6 @@ class TripListViewModel: ObservableObject {
         trip.transportType = transportType
         trip.originCity = originCity
         trip.noTransportReason = noTransportReason
-        // no event ranges yet
         saveAndRefresh()
     }
 
@@ -57,6 +56,38 @@ class TripListViewModel: ObservableObject {
             context.delete(trips[i])
         }
         saveAndRefresh()
+    }
+
+    func createTrip(
+        name: String,
+        city: String,
+        country: String,
+        startDate: Date,
+        endDate: Date,
+        eventStartDate: Date,
+        eventEndDate: Date,
+        transportType: String,
+        originCity: String,
+        noTransportReason: String?
+    ) {
+        let trip = Trip(context: context)
+        trip.id = UUID()
+        trip.name = name
+        trip.destinationCity = city
+        trip.destinationCountry = country
+        trip.startDate = startDate
+        trip.endDate = endDate
+        trip.eventStartDate = eventStartDate
+        trip.eventEndDate = eventEndDate
+        trip.transportType = transportType
+        trip.originCity = originCity
+        trip.noTransportReason = noTransportReason
+        do {
+            try context.save()
+            fetchTrips()
+        } catch {
+            print("Failed to save trip: \(error)")
+        }
     }
 
     private func saveAndRefresh() {
