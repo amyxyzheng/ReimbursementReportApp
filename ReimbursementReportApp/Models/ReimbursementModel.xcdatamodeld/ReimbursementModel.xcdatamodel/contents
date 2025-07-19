@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="MealItem" representedClassName="MealItem" syncable="YES" codeGenerationType="class">
-        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="occasion" attributeType="String"/>
+        <attribute name="date" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="occasion" attributeType="String" defaultValueString="Meal"/>
         <attribute name="receiptData" optional="YES" attributeType="Binary"/>
         <attribute name="receiptType" optional="YES" attributeType="String"/>
     </entity>
     <entity name="Receipt" representedClassName="Receipt" syncable="YES" codeGenerationType="class">
         <attribute name="data" optional="YES" attributeType="Binary"/>
-        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="date" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
         <attribute name="expenseCategory" optional="YES" attributeType="String"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="type" optional="YES" attributeType="String"/>
         <relationship name="trip" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Trip" inverseName="receipts" inverseEntity="Trip"/>
     </entity>
     <entity name="Report" representedClassName="Report" syncable="YES" codeGenerationType="class">
-        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="dateRangeEnd" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="dateRangeStart" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="includedItemIDs" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
-        <attribute name="summaryText" attributeType="String"/>
-        <attribute name="type" attributeType="String"/>
-        <attribute name="zipData" attributeType="Binary"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
+        <attribute name="dateRangeEnd" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
+        <attribute name="dateRangeStart" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="includedItemIDs" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="summaryText" attributeType="String" defaultValueString=""/>
+        <attribute name="type" attributeType="String" defaultValueString=""/>
+        <attribute name="zipData" optional="YES" attributeType="Binary"/>
     </entity>
     <entity name="Trip" representedClassName="Trip" syncable="YES" codeGenerationType="class">
-        <attribute name="destinationCity" attributeType="String"/>
-        <attribute name="destinationCountry" attributeType="String"/>
-        <attribute name="endDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="destinationCity" attributeType="String" defaultValueString=""/>
+        <attribute name="destinationCountry" attributeType="String" defaultValueString=""/>
+        <attribute name="endDate" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
         <attribute name="eventEndDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="eventStartDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="name" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString="Untitled Trip"/>
         <attribute name="noTransportReason" optional="YES" attributeType="String"/>
         <attribute name="originCity" optional="YES" attributeType="String"/>
         <attribute name="originCountry" optional="YES" attributeType="String"/>
-        <attribute name="startDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="startDate" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
         <attribute name="transportType" optional="YES" attributeType="String"/>
         <relationship name="receipts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Receipt" inverseName="trip" inverseEntity="Receipt"/>
     </entity>
