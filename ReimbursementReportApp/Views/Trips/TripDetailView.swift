@@ -15,6 +15,9 @@ struct TripDetailView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var pickerSource: PickerSource?
     @State private var isTransportationExpanded = false
+    @State private var showingDocumentPicker = false
+    @State private var customCategoryName = ""
+    @State private var showingCustomCategoryAlert = false
 
     @State private var editableTripName: String = ""
     @FocusState private var isEditingTripName: Bool
@@ -53,7 +56,7 @@ struct TripDetailView: View {
                                 Image(systemName: getReceiptIcon(for: receipt))
                                     .foregroundColor(.blue)
                                 VStack(alignment: .leading) {
-                                    Text(ReceiptCategory(rawValue: receipt.expenseCategory ?? "")?.displayName ?? "Receipt")
+                                    Text(getReceiptDisplayName(for: receipt))
                                         .font(.subheadline)
                                     if let date = receipt.date {
                                         Text(date.formatted(.dateTime.month().day().year()))
@@ -81,6 +84,10 @@ struct TripDetailView: View {
                 selectedPhotoItem = nil // Clear previous selection
                 pickerSource = .photoLibrary
             }
+            Button("PDF File") {
+                selectedPhotoItem = nil // Clear previous selection
+                showingDocumentPicker = true
+            }
             Button("Cancel", role: .cancel) { }
         }
         .sheet(item: $pickerSource) { source in
@@ -92,11 +99,26 @@ struct TripDetailView: View {
                     receipt.date = Date()
                     receipt.data = data
                     receipt.type = type
-                    receipt.expenseCategory = selectedReceiptCategory.rawValue
+                    let categoryName = selectedReceiptCategory == .other ? customCategoryName : selectedReceiptCategory.rawValue
+                    receipt.expenseCategory = categoryName
                     vm.addReceipt(receipt)
+                    customCategoryName = "" // Reset for next use
                 },
                 pickerSource: $pickerSource
             )
+        }
+        .sheet(isPresented: $showingDocumentPicker) {
+            DocumentPicker { data, mimeType in
+                let receipt = Receipt(context: vm.context)
+                receipt.id = UUID()
+                receipt.date = Date()
+                receipt.data = data
+                receipt.type = mimeType
+                let categoryName = selectedReceiptCategory == .other ? customCategoryName : selectedReceiptCategory.rawValue
+                receipt.expenseCategory = categoryName
+                vm.addReceipt(receipt)
+                customCategoryName = "" // Reset for next use
+            }
         }
         .onAppear {
             editableTripName = vm.trip.name ?? ""
@@ -305,8 +327,12 @@ struct TripDetailView: View {
                     ForEach(ReceiptCategory.allCases, id: \.rawValue) { category in
                         Button(action: {
                             selectedReceiptCategory = category
-                            selectedPhotoItem = nil // Clear previous selection
-                            showingSourceDialog = true
+                            if category == .other {
+                                showingCustomCategoryAlert = true
+                            } else {
+                                selectedPhotoItem = nil // Clear previous selection
+                                showingSourceDialog = true
+                            }
                         }) {
                             Text(category.displayName)
                         }
@@ -326,34 +352,61 @@ struct TripDetailView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
+        .alert("Custom Category", isPresented: $showingCustomCategoryAlert) {
+            TextField("Category name", text: $customCategoryName)
+            Button("Cancel", role: .cancel) {
+                customCategoryName = ""
+            }
+            Button("Add Receipt") {
+                selectedPhotoItem = nil // Clear previous selection
+                showingSourceDialog = true
+            }
+        } message: {
+            Text("Enter a name for this receipt category:")
+        }
     }
 
     private func getReceiptIcon(for receipt: Receipt) -> String {
-        guard let data = receipt.data else { return "doc.text" }
-        if UIImage(data: data) != nil {
+        if receipt.type == "application/pdf" {
+            return "doc.text"
+        } else if let data = receipt.data, UIImage(data: data) != nil {
             return "photo"
         } else {
             return "doc.text"
         }
     }
+    
+    private func getReceiptDisplayName(for receipt: Receipt) -> String {
+        guard let category = receipt.expenseCategory else { return "Receipt" }
+        
+        // First try to match with predefined categories
+        if let predefinedCategory = ReceiptCategory(rawValue: category) {
+            return predefinedCategory.displayName
+        }
+        
+        // If not a predefined category, it's a custom category name
+        return category
+    }
 }
 
 
 enum ReceiptCategory: String, CaseIterable, Identifiable {
-    case transport, hotel, upgrade, localTravel
+    case transport, hotel, upgrade, localTravel, other
     
     var id: String { rawValue }
     
     var displayName: String {
         switch self {
         case .transport:
-            return "Transportation"
+            return "Major Transport"
         case .hotel:
             return "Hotel"
         case .upgrade:
             return "Flight Upgrade"
         case .localTravel:
-            return "Local Travel"
+            return "Local Transit"
+        case .other:
+            return "Other"
         }
     }
 }

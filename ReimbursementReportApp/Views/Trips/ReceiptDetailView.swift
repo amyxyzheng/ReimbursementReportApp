@@ -14,17 +14,41 @@ struct ReceiptDetailView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                if let data = receipt.data, let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
+                if let data = receipt.data {
+                    if let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding()
+                    } else if receipt.type == "application/pdf" {
+                        VStack(spacing: 16) {
+                            Image(systemName: "doc.text")
+                                .font(.system(size: 80))
+                                .foregroundColor(.blue)
+                            Text("PDF Document")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                            Text("Size: \(ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                         .padding()
+                    } else {
+                        VStack {
+                            Image(systemName: "doc.text")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("Receipt not available")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                    }
                 } else {
                     VStack {
                         Image(systemName: "doc.text")
                             .font(.system(size: 60))
                             .foregroundColor(.gray)
-                        Text("Receipt image not available")
+                        Text("Receipt not available")
                             .foregroundColor(.secondary)
                     }
                     .padding()

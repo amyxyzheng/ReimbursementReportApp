@@ -8,19 +8,6 @@
 import SwiftUI
 import PhotosUI
 
-enum PickerSource: Identifiable {
-    case camera, photoLibrary
-
-    var id: Int { hashValue }
-
-    var sourceType: UIImagePickerController.SourceType {
-        switch self {
-        case .camera: return .camera
-        case .photoLibrary: return .photoLibrary
-        }
-    }
-}
-
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismissAddMeal
     @ObservedObject var viewModel: MealListViewModel
@@ -34,6 +21,7 @@ struct AddMealView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showingSourceDialog = false
     @State private var pickerSource: PickerSource?
+    @State private var showingDocumentPicker = false
     
     init(viewModel: MealListViewModel, editingMeal: MealItem? = nil) {
         self.viewModel = viewModel
@@ -55,8 +43,8 @@ struct AddMealView: View {
                 Section(header: Text("Upload Receipt")) {
                     Button(action: { showingSourceDialog = true }) {
                         HStack {
-                            Image(systemName: "plus")
-                            Text("Add Receipt Photo")
+                            Image(systemName: editingMeal != nil ? "pencil" : "plus")
+                            Text(editingMeal != nil ? "Change Receipt" : "Add Receipt")
                         }
                     }
                     .confirmationDialog("Add Receipt", isPresented: $showingSourceDialog, titleVisibility: .visible) {
@@ -67,6 +55,10 @@ struct AddMealView: View {
                         Button("Photo Library") {
                             selectedPhotoItem = nil // Clear previous selection
                             pickerSource = .photoLibrary
+                        }
+                        Button("PDF File") {
+                            selectedPhotoItem = nil // Clear previous selection
+                            showingDocumentPicker = true
                         }
                         Button("Cancel", role: .cancel) { }
                     }
@@ -80,15 +72,40 @@ struct AddMealView: View {
                             pickerSource: $pickerSource
                         )
                     }
-                    if let data = imageData, let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 150)
+                    .sheet(isPresented: $showingDocumentPicker) {
+                        DocumentPicker { data, mimeType in
+                            imageData = data
+                            fileType = mimeType
+                        }
+                    }
+                    if let data = imageData {
+                        if let uiImage = UIImage(data: data) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 150)
+                        } else if fileType == "application/pdf" {
+                            HStack {
+                                Image(systemName: "doc.text")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.blue)
+                                VStack(alignment: .leading) {
+                                    Text("PDF Document")
+                                        .font(.headline)
+                                    Text("Size: \(ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(8)
+                        }
                     }
                 }
             }
-            .navigationTitle("Add Meal")
+            .navigationTitle(editingMeal != nil ? "Edit Meal" : "Add Meal")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
