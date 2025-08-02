@@ -4,7 +4,7 @@ import CoreData
 
 class ReportCreationViewModel: ObservableObject {
     enum ReportType: String, CaseIterable, Identifiable {
-        case meal = "Meal"
+        case expense = "Expense"
         case trip = "Trip"
         var id: String { rawValue }
     }
@@ -16,7 +16,7 @@ class ReportCreationViewModel: ObservableObject {
         var subtitle: String? = nil // For trip dates
     }
     
-    @Published var selectedType: ReportType = .meal {
+    @Published var selectedType: ReportType = .expense {
         didSet { fetchItems() }
     }
     @Published var dateRange: ClosedRange<Date> = {
@@ -39,7 +39,7 @@ class ReportCreationViewModel: ObservableObject {
     
     func fetchItems() {
         switch selectedType {
-        case .meal:
+        case .expense:
             let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
             request.predicate = NSPredicate(
                 format: "date >= %@ AND date <= %@",
@@ -48,9 +48,9 @@ class ReportCreationViewModel: ObservableObject {
             )
             request.sortDescriptors = [NSSortDescriptor(keyPath: \MealItem.date, ascending: false)]
             do {
-                let meals = try context.fetch(request)
-                items = meals.map { meal in
-                    SelectableItem(id: meal.id ?? UUID(), name: meal.occasion ?? "Meal", isSelected: true)
+                let expenses = try context.fetch(request)
+                items = expenses.map { expense in
+                    SelectableItem(id: expense.id ?? UUID(), name: expense.occasion ?? "Expense", isSelected: true)
                 }
             } catch {
                 items = []
@@ -85,7 +85,7 @@ class ReportCreationViewModel: ObservableObject {
     
     func toggleSelection(for itemID: UUID) {
         switch selectedType {
-        case .meal:
+        case .expense:
             if let idx = items.firstIndex(where: { $0.id == itemID }) {
                 items[idx].isSelected.toggle()
             }
@@ -102,14 +102,14 @@ class ReportCreationViewModel: ObservableObject {
         let includedItemIDs = selectedIDs as NSArray
         
         switch selectedType {
-        case .meal:
-            // Fetch selected meals
+        case .expense:
+            // Fetch selected expenses
             let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
             let uuids = items.filter { $0.isSelected }.map { $0.id }
             request.predicate = NSPredicate(format: "id IN %@", uuids)
             do {
-                let meals = try context.fetch(request)
-                let (summary, zipData, errorMsg) = ReportGenerator.generateMealReport(meals: meals)
+                let expenses = try context.fetch(request)
+                let (summary, zipData, errorMsg) = ReportGenerator.generateExpenseReport(expenses: expenses)
                 if let errorMsg = errorMsg {
                     errorMessage = errorMsg
                     return false

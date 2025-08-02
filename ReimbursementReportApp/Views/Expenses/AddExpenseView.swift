@@ -1,5 +1,5 @@
 //
-//  AddMealView.swift
+//  AddExpenseView.swift
 //  ReimbursementReportApp
 //
 //  Created by Xuyang Zheng on 7/12/25.
@@ -8,11 +8,11 @@
 import SwiftUI
 import PhotosUI
 
-struct AddMealView: View {
-    @Environment(\.dismiss) private var dismissAddMeal
-    @ObservedObject var viewModel: MealListViewModel
+struct AddExpenseView: View {
+    @Environment(\.dismiss) private var dismissAddExpense
+    @ObservedObject var viewModel: ExpenseListViewModel
 
-    let editingMeal: MealItem?
+    let editingExpense: MealItem?
 
     @State private var date: Date
     @State private var occasion: String
@@ -23,14 +23,14 @@ struct AddMealView: View {
     @State private var pickerSource: PickerSource?
     @State private var showingDocumentPicker = false
     
-    init(viewModel: MealListViewModel, editingMeal: MealItem? = nil) {
+    init(viewModel: ExpenseListViewModel, editingExpense: MealItem? = nil) {
         self.viewModel = viewModel
-        self.editingMeal = editingMeal
+        self.editingExpense = editingExpense
 
-        _date = State(initialValue: editingMeal?.date ?? Date())
-        _occasion = State(initialValue: editingMeal?.occasion ?? "")
-        _imageData = State(initialValue: editingMeal?.receiptData)
-        _fileType = State(initialValue: editingMeal?.receiptType ?? "image/jpeg")
+        _date = State(initialValue: editingExpense?.date ?? Date())
+        _occasion = State(initialValue: editingExpense?.occasion ?? "")
+        _imageData = State(initialValue: editingExpense?.receiptData)
+        _fileType = State(initialValue: editingExpense?.receiptType ?? "image/jpeg")
     }
 
     var body: some View {
@@ -43,8 +43,8 @@ struct AddMealView: View {
                 Section(header: Text("Upload Receipt")) {
                     Button(action: { showingSourceDialog = true }) {
                         HStack {
-                            Image(systemName: editingMeal != nil ? "pencil" : "plus")
-                            Text(editingMeal != nil ? "Change Receipt" : "Add Receipt")
+                            Image(systemName: editingExpense != nil ? "pencil" : "plus")
+                            Text(editingExpense != nil ? "Change Receipt" : "Add Receipt")
                         }
                     }
                     .confirmationDialog("Add Receipt", isPresented: $showingSourceDialog, titleVisibility: .visible) {
@@ -105,31 +105,31 @@ struct AddMealView: View {
                     }
                 }
             }
-            .navigationTitle(editingMeal != nil ? "Edit Meal" : "Add Meal")
+            .navigationTitle(editingExpense != nil ? "Edit Expense" : "Add Expense")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        dismissAddMeal()
+                        dismissAddExpense()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                     guard let data = imageData, !occasion.isEmpty else { return }
 
-                        if let editingMeal = editingMeal {
-                            viewModel.updateMeal(editingMeal,
+                        if let editingExpense = editingExpense {
+                            viewModel.updateExpense(editingExpense,
                                                  newDate: date,
                                                  newOccasion: occasion,
                                                  newData: data,
                                                  newType: fileType)
                         } else {
-                            viewModel.addMeal(date: date,
+                            viewModel.addExpense(date: date,
                                               occasion: occasion,
                                               receiptData: data,
                                               receiptType: fileType)
                         }
 
-                        dismissAddMeal()
+                        dismissAddExpense()
                     }
                 }
             }
@@ -138,10 +138,10 @@ struct AddMealView: View {
 }
 
 #if DEBUG
-struct AddMealView_Previews: PreviewProvider {
+struct AddExpenseView_Previews: PreviewProvider {
     static var previews: some View {
-        AddMealView(viewModel: {
-            let vm = MealListViewModel(context: PersistenceController.preview.container.viewContext)
+        AddExpenseView(viewModel: {
+            let vm = ExpenseListViewModel(context: PersistenceController.preview.container.viewContext)
             return vm
         }())
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)

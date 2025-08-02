@@ -65,17 +65,17 @@ struct ReportDetailView: View {
         .sheet(isPresented: $showMailComposer) {
             if let zipData = report.zipData, let summary = report.summaryText {
                 ReportMailComposer(
-                    subject: emailSubject(),
+                    subject: reportTitle(),
                     body: summary,
                     zipData: zipData,
-                    zipFilename: "Receipts.zip",
+                    zipFilename: reportTitle() + ".zip",
                     onDismiss: { showMailComposer = false }
                 )
             }
         }
         .sheet(isPresented: $showShareSheet) {
             if let zipData = report.zipData {
-                ActivityView(activityItems: [TemporaryFileData(data: zipData, fileName: "Receipts.zip")]) {
+                ActivityView(activityItems: [TemporaryFileData(data: zipData, fileName: reportTitle() + ".zip")]) {
                     showShareSheet = false
                 }
             }
@@ -99,11 +99,11 @@ struct ReportDetailView: View {
         }
     }
     
-    private func emailSubject() -> String {
-        let type = (report.type ?? "Meal").capitalized
+    private func reportTitle() -> String {
+        let type = (report.type ?? "Expense").capitalized
         let start = formattedDate(report.dateRangeStart)
         let end = formattedDate(report.dateRangeEnd)
-        return "\(type) Expenses Report \(start)-\(end)"
+        return "\(type) Report \(start)-\(end)"
     }
     
     private func formattedDate(_ date: Date?) -> String {
@@ -119,7 +119,7 @@ struct ReportDetailView_Previews: PreviewProvider {
         // Provide a mock Report for preview
         let context = PersistenceController.preview.container.viewContext
         let report = Report(context: context)
-        report.type = "meal"
+                    report.type = "expense"
         report.dateRangeStart = Date()
         report.dateRangeEnd = Calendar.current.date(byAdding: .day, value: 2, to: Date())
         report.createdAt = Date()

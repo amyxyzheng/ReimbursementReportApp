@@ -28,7 +28,7 @@ struct ReportCreationView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                if viewModel.selectedType == .meal {
+                if viewModel.selectedType == .expense {
                     Section(header: Text("Date Range")) {
                         HStack {
                             VStack(alignment: .leading) {
@@ -47,7 +47,7 @@ struct ReportCreationView: View {
                     }
                 }
                 
-                Section(header: Text(viewModel.selectedType == .meal ? "Select Meals" : "Select Trip")) {
+                Section(header: Text(viewModel.selectedType == .expense ? "Select Expenses" : "Select Trip")) {
                     if viewModel.selectedType == .trip {
                         Text("Select a trip below.")
                     }
@@ -56,20 +56,20 @@ struct ReportCreationView: View {
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading) {
                                     Text(item.name)
-                                    if viewModel.selectedType == .meal {
-                                        if let meal = fetchMeal(for: item.id) {
-                                            Text(meal.date?.formatted(date: .abbreviated, time: .omitted) ?? "")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    } else if viewModel.selectedType == .trip, let subtitle = item.subtitle {
+                                                                                            if viewModel.selectedType == .expense {
+                                        if let expense = fetchExpense(for: item.id) {
+                            Text(expense.date?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else if viewModel.selectedType == .trip, let subtitle = item.subtitle {
                                         Text(subtitle)
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
                                 }
                                 Spacer()
-                                if viewModel.selectedType == .meal {
+                                if viewModel.selectedType == .expense {
                                     Image(systemName: item.isSelected ? "checkmark.square" : "square")
                                         .onTapGesture {
                                             viewModel.toggleSelection(for: item.id)
@@ -156,8 +156,8 @@ struct ReportCreationView: View {
         }
     }
     
-    // Add helper to fetch meal for date display
-    private func fetchMeal(for itemID: UUID) -> MealItem? {
+    // Add helper to fetch expense for date display
+    private func fetchExpense(for itemID: UUID) -> MealItem? {
         let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", itemID as CVarArg)
         request.fetchLimit = 1

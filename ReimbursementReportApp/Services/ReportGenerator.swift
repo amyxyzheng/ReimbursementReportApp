@@ -10,7 +10,7 @@ import UIKit
 import ZIPFoundation
 
 struct ReportGenerator {
-    static func mealReceiptFilename(occasion: String, date: Date, id: UUID, ext: String) -> String {
+    static func expenseReceiptFilename(occasion: String, date: Date, id: UUID, ext: String) -> String {
         let sanitizedOccasion = sanitize(occasion)
         let dateString = formatDate(date)
         let shortID = id.uuidString.prefix(4)
@@ -45,15 +45,15 @@ struct ReportGenerator {
         }
     }
     
-    static func generateMealReport(meals: [MealItem]) -> (summary: String?, zipData: Data?, errorMessage: String?) {
-        guard let minDate = meals.compactMap({ $0.date }).min(),
-              let maxDate = meals.compactMap({ $0.date }).max() else {
-            return (nil, nil, "No meals to report.")
+    static func generateExpenseReport(expenses: [MealItem]) -> (summary: String?, zipData: Data?, errorMessage: String?) {
+        guard let minDate = expenses.compactMap({ $0.date }).min(),
+              let maxDate = expenses.compactMap({ $0.date }).max() else {
+            return (nil, nil, "No expenses to report.")
         }
         var summaryLines: [String] = []
-        summaryLines.append("Meal Expenses Report")
+        summaryLines.append("Expenses Report")
         summaryLines.append("Date Range: \(formatDate(minDate)) to \(formatDate(maxDate))\n")
-        var mealCount = 0
+        var expenseCount = 0
         // Create a temporary file for the ZIP
         let tempDir = FileManager.default.temporaryDirectory
         let zipURL = tempDir.appendingPathComponent(UUID().uuidString + ".zip")
@@ -62,12 +62,12 @@ struct ReportGenerator {
                 print("[DEBUG] Failed to create ZIP archive at URL: \(zipURL)")
                 return (nil, nil, "Failed to create ZIP archive.")
             }
-            for meal in meals {
-                guard let id = meal.id, let date = meal.date else { continue }
-                let occasion = meal.occasion ?? "Meal"
-                let (data, ext) = convertToJPEG(data: meal.receiptData ?? Data(), mimeType: meal.receiptType)
-                let filename = mealReceiptFilename(occasion: occasion, date: date, id: id, ext: ext)
-                print("[DEBUG] meal: \(occasion), data size: \(data.count), filename: \(filename)")
+            for expense in expenses {
+                guard let id = expense.id, let date = expense.date else { continue }
+                let occasion = expense.occasion ?? "Expense"
+                let (data, ext) = convertToJPEG(data: expense.receiptData ?? Data(), mimeType: expense.receiptType)
+                let filename = expenseReceiptFilename(occasion: occasion, date: date, id: id, ext: ext)
+                print("[DEBUG] expense: \(occasion), data size: \(data.count), filename: \(filename)")
                 // Add to ZIP if data is not empty
                 if !data.isEmpty {
                     do {
@@ -84,14 +84,14 @@ struct ReportGenerator {
                     return (nil, nil, msg)
                 }
                 summaryLines.append("• \(occasion) on \(formatDate(date)) — Receipt: \(filename)")
-                mealCount += 1
+                expenseCount += 1
             }
             // Read ZIP data from file
             let zipData = try Data(contentsOf: zipURL)
             print("[DEBUG] Final ZIP size: \(zipData.count) bytes")
             // Clean up temp file
             try? FileManager.default.removeItem(at: zipURL)
-            summaryLines.append("\nTotal Meals: \(mealCount)")
+            summaryLines.append("\nTotal Expenses: \(expenseCount)")
             return (summaryLines.joined(separator: "\n"), zipData, nil)
         } catch {
             print("[DEBUG] Error creating ZIP: \(error)")

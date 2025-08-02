@@ -7,13 +7,13 @@ struct IncludedItemsSection: View {
     
     var body: some View {
         Section(header: Text("Included Items")) {
-            if report.type == "meal" {
-                let meals = fetchIncludedMeals()
-                if meals.isEmpty {
+            if report.type == "expense" {
+                let expenses = fetchIncludedExpenses()
+                if expenses.isEmpty {
                     Text("No items")
                 } else {
-                    ForEach(meals, id: \.id) { meal in
-                        Text("🍽️ \(meal.occasion ?? "Meal") - \(formattedDate(meal.date))")
+                    ForEach(expenses, id: \.id) { expense in
+                        Text("💰 \(expense.occasion ?? "Expense") - \(formattedDate(expense.date))")
                     }
                 }
             } else if report.type == "trip" {
@@ -48,7 +48,7 @@ struct IncludedItemsSection: View {
         }
     }
     
-    private func fetchIncludedMeals() -> [MealItem] {
+    private func fetchIncludedExpenses() -> [MealItem] {
         guard let idStrings = report.includedItemIDs as? [String] else { return [] }
         let uuids = idStrings.compactMap { UUID(uuidString: $0) }
         let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
