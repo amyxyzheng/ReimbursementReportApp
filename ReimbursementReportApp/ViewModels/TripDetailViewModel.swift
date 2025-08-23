@@ -55,6 +55,19 @@ class TripDetailViewModel: ObservableObject {
         fetchReceipts()
     }
     
+
+    
+    func deleteReceipt(_ receipt: Receipt) {
+        context.delete(receipt)
+        saveContext()
+        fetchReceipts()
+    }
+    
+    func toggleReimbursed() {
+        trip.reimbursed.toggle()
+        saveContext()
+    }
+    
     func setTransport(_ type: TransportType) {
         transportType = type
         trip.transportType = type.rawValue

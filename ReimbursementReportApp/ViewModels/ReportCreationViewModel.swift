@@ -50,7 +50,11 @@ class ReportCreationViewModel: ObservableObject {
             do {
                 let expenses = try context.fetch(request)
                 items = expenses.map { expense in
-                    SelectableItem(id: expense.id ?? UUID(), name: expense.occasion ?? "Expense", isSelected: true)
+                    SelectableItem(
+                        id: expense.id ?? UUID(), 
+                        name: expense.occasion ?? "Expense", 
+                        isSelected: !expense.reimbursed // Only select unreimbursed items by default
+                    )
                 }
             } catch {
                 items = []
@@ -73,7 +77,7 @@ class ReportCreationViewModel: ObservableObject {
                     return SelectableItem(
                         id: trip.id ?? UUID(),
                         name: trip.name ?? "Trip",
-                        isSelected: idx == 0, // Only first trip selected by default
+                        isSelected: idx == 0 && !trip.reimbursed, // Only first unreimbursed trip selected by default
                         subtitle: dateString
                     )
                 }

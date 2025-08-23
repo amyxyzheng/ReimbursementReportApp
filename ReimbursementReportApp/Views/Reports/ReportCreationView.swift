@@ -55,14 +55,35 @@ struct ReportCreationView: View {
                         ForEach(viewModel.items) { item in
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading) {
-                                    Text(item.name)
-                                                                                            if viewModel.selectedType == .expense {
+                                    HStack {
+                                        Text(item.name)
+                                        if viewModel.selectedType == .expense {
+                                            if let expense = fetchExpense(for: item.id), expense.reimbursed {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.green)
+                                                    .font(.caption)
+                                            }
+                                        } else if viewModel.selectedType == .trip {
+                                            if let trip = fetchTrip(for: item.id), trip.reimbursed {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.green)
+                                                    .font(.caption)
+                                            }
+                                        }
+                                    }
+                                    .foregroundColor(
+                                        (viewModel.selectedType == .expense && fetchExpense(for: item.id)?.reimbursed == true) ||
+                                        (viewModel.selectedType == .trip && fetchTrip(for: item.id)?.reimbursed == true) 
+                                        ? .secondary : .primary
+                                    )
+                                    
+                                    if viewModel.selectedType == .expense {
                                         if let expense = fetchExpense(for: item.id) {
-                            Text(expense.date?.formatted(date: .abbreviated, time: .omitted) ?? "")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    } else if viewModel.selectedType == .trip, let subtitle = item.subtitle {
+                                            Text(expense.date?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    } else if viewModel.selectedType == .trip, let subtitle = item.subtitle {
                                         Text(subtitle)
                                             .font(.caption)
                                             .foregroundColor(.secondary)
@@ -81,6 +102,11 @@ struct ReportCreationView: View {
                                         }
                                 }
                             }
+                            .opacity(
+                                (viewModel.selectedType == .expense && fetchExpense(for: item.id)?.reimbursed == true) ||
+                                (viewModel.selectedType == .trip && fetchTrip(for: item.id)?.reimbursed == true)
+                                ? 0.6 : 1.0
+                            )
                         }
                     }
                     .frame(height: 200)
@@ -163,6 +189,16 @@ struct ReportCreationView: View {
         request.fetchLimit = 1
         return try? context.fetch(request).first
     }
+    
+    // Add helper to fetch trip for reimbursement status
+    private func fetchTrip(for itemID: UUID) -> Trip? {
+        let request: NSFetchRequest<Trip> = Trip.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", itemID as CVarArg)
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
+    }
+    
+
 }
 
 extension ReportCreationViewModel {

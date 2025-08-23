@@ -58,6 +58,26 @@ class ExpenseListViewModel: ObservableObject {
         }
     }
     
+    func deleteExpense(_ expense: MealItem) {
+        context.delete(expense)
+        do {
+            try context.save()
+            fetchExpenses()
+        } catch {
+            print("Failed to delete expense: \(error)")
+        }
+    }
+    
+    func toggleReimbursed(_ expense: MealItem) {
+        expense.reimbursed.toggle()
+        do {
+            try context.save()
+            fetchExpenses()
+        } catch {
+            print("Failed to update expense reimbursement status: \(error)")
+        }
+    }
+    
     func updateExpense(_ expense: MealItem,
                     newDate: Date,
                     newOccasion: String,

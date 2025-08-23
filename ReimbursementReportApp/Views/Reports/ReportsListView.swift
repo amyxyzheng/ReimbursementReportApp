@@ -30,8 +30,14 @@ struct ReportsListView: View {
                         }
                         .padding(.vertical, 4)
                     }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            deleteReport(report)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
-                .onDelete(perform: deleteReports)
             }
             .navigationTitle("Reports")
             .toolbar {
@@ -54,11 +60,8 @@ struct ReportsListView: View {
         return formatter.string(from: date)
     }
     
-    private func deleteReports(at offsets: IndexSet) {
-        for index in offsets {
-            let report = reports[index]
-            context.delete(report)
-        }
+    private func deleteReport(_ report: Report) {
+        context.delete(report)
         do {
             try context.save()
         } catch {

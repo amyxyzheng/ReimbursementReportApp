@@ -11,13 +11,13 @@ import PhotosUI
 struct TripDetailView: View {
     @StateObject var vm: TripDetailViewModel
     @State private var showingSourceDialog = false
-    @State private var selectedReceiptCategory: ReceiptCategory = .transport
-    @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var pickerSource: PickerSource?
     @State private var isTransportationExpanded = false
     @State private var showingDocumentPicker = false
-    @State private var customCategoryName = ""
-    @State private var showingCustomCategoryAlert = false
+    @State private var showingCategorySelection = false
+    @State private var pendingReceiptData: Data?
+    @State private var pendingReceiptType: String?
+    @State private var selectedReceiptCategory: ReceiptCategory = .transport
 
     @State private var editableTripName: String = ""
     @FocusState private var isEditingTripName: Bool
@@ -35,97 +35,68 @@ struct TripDetailView: View {
                 perDiemSection
                 transportationSection
             }
-            Section(header: receiptsSectionHeader) {
-                if vm.receipts.isEmpty {
-                    VStack {
-                        Image(systemName: "doc.text")
-                            .font(.system(size: 40))
-                            .foregroundColor(.gray)
-                        Text("No receipts yet")
-                            .foregroundColor(.secondary)
-                        Text("Receipt count: \(vm.receipts.count)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                } else {
-                    ForEach(vm.receipts, id: \.id) { receipt in
-                        NavigationLink(destination: ReceiptDetailView(receipt: receipt)) {
-                            HStack {
-                                Image(systemName: getReceiptIcon(for: receipt))
-                                    .foregroundColor(.blue)
-                                VStack(alignment: .leading) {
-                                    Text(getReceiptDisplayName(for: receipt))
-                                        .font(.subheadline)
-                                    if let date = receipt.date {
-                                        Text(date.formatted(.dateTime.month().day().year()))
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    .onDelete(perform: vm.deleteReceipt)
+            Section(header: ReceiptSourceSelector(
+                showingSourceDialog: $showingSourceDialog,
+                pickerSource: $pickerSource,
+                showingDocumentPicker: $showingDocumentPicker,
+                onImageSelected: { data, type in
+                    // Show category selection after image is selected
+                    showingCategorySelection = true
+                    pendingReceiptData = data
+                    pendingReceiptType = type
+                },
+                onDocumentSelected: { data, mimeType in
+                    // Show category selection after document is selected
+                    showingCategorySelection = true
+                    pendingReceiptData = data
+                    pendingReceiptType = mimeType
                 }
+            )) {
+                ReceiptListView(
+                    receipts: vm.receipts,
+                    onDeleteReceipt: { receipt in
+                        vm.deleteReceipt(receipt)
+                    }
+                )
             }
         }
         .listStyle(InsetGroupedListStyle())
-        .confirmationDialog("Select Source", isPresented: $showingSourceDialog, titleVisibility: .visible) {
-            Button("Camera") {
-                selectedPhotoItem = nil // Clear previous selection
-                pickerSource = .camera
-            }
-            Button("Photo Library") {
-                selectedPhotoItem = nil // Clear previous selection
-                pickerSource = .photoLibrary
-            }
-            Button("PDF File") {
-                selectedPhotoItem = nil // Clear previous selection
-                showingDocumentPicker = true
-            }
-            Button("Cancel", role: .cancel) { }
-        }
-        .sheet(item: $pickerSource) { source in
-            ImagePicker(
-                sourceType: source.sourceType,
-                onImageSelected: { data, type in
-                    let receipt = Receipt(context: vm.context)
-                    receipt.id = UUID()
-                    receipt.date = Date()
-                    receipt.data = data
-                    receipt.type = type
-                    let categoryName = selectedReceiptCategory == .other ? customCategoryName : selectedReceiptCategory.rawValue
-                    receipt.expenseCategory = categoryName
-                    vm.addReceipt(receipt)
-                    customCategoryName = "" // Reset for next use
-                },
-                pickerSource: $pickerSource
-            )
-        }
-        .sheet(isPresented: $showingDocumentPicker) {
-            DocumentPicker { data, mimeType in
-                let receipt = Receipt(context: vm.context)
-                receipt.id = UUID()
-                receipt.date = Date()
-                receipt.data = data
-                receipt.type = mimeType
-                let categoryName = selectedReceiptCategory == .other ? customCategoryName : selectedReceiptCategory.rawValue
-                receipt.expenseCategory = categoryName
-                vm.addReceipt(receipt)
-                customCategoryName = "" // Reset for next use
-            }
-        }
         .onAppear {
             editableTripName = vm.trip.name ?? ""
         }
+        .alert("Select Receipt Category", isPresented: $showingCategorySelection) {
+            ForEach(ReceiptCategory.allCases, id: \.rawValue) { category in
+                Button(category.displayName) {
+                    createReceipt(with: category)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                // Clear pending data
+                pendingReceiptData = nil
+                pendingReceiptType = nil
+            }
+        } message: {
+            Text("Choose a category for this receipt")
+        }
         // Remove .alert modifiers for help
     }
-
+    
+    private func createReceipt(with category: ReceiptCategory) {
+        guard let data = pendingReceiptData, let type = pendingReceiptType else { return }
+        
+        let receipt = Receipt(context: vm.context)
+        receipt.id = UUID()
+        receipt.date = Date()
+        receipt.data = data
+        receipt.type = type
+        receipt.expenseCategory = category.rawValue
+        vm.addReceipt(receipt)
+        
+        // Clear pending data
+        pendingReceiptData = nil
+        pendingReceiptType = nil
+    }
+    
     private var destinationHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
@@ -154,12 +125,20 @@ struct TripDetailView: View {
                     .buttonStyle(.bordered)
                     .padding(.top, 4)
                 } else {
-                    Text(vm.trip.name ?? "Untitled Trip")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(nil)
+                    HStack {
+                        Text(vm.trip.name ?? "Untitled Trip")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(nil)
+                        
+                        if vm.trip.reimbursed {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.title3)
+                        }
+                    }
                     Button("Edit") {
                         editableTripName = vm.trip.name ?? ""
                         isEditingName = true
@@ -179,6 +158,16 @@ struct TripDetailView: View {
             }
         }
         .padding(.vertical, 4)
+        .opacity(vm.trip.reimbursed ? 0.6 : 1.0)
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                vm.toggleReimbursed()
+            } label: {
+                Label(vm.trip.reimbursed ? "Mark Unreimbursed" : "Mark Reimbursed", 
+                      systemImage: vm.trip.reimbursed ? "xmark.circle" : "checkmark.circle")
+            }
+            .tint(vm.trip.reimbursed ? .orange : .green)
+        }
     }
 
     private var eventDateSection: some View {
@@ -317,99 +306,10 @@ struct TripDetailView: View {
         }
         .padding(.vertical, 4)
     }
-
-    private var receiptsSectionHeader: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("Receipts").font(.headline)
-                Spacer()
-                Menu {
-                    ForEach(ReceiptCategory.allCases, id: \.rawValue) { category in
-                        Button(action: {
-                            selectedReceiptCategory = category
-                            if category == .other {
-                                showingCustomCategoryAlert = true
-                            } else {
-                                selectedPhotoItem = nil // Clear previous selection
-                                showingSourceDialog = true
-                            }
-                        }) {
-                            Text(category.displayName)
-                        }
-                    }
-                } label: {
-                    Text("Add")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.blue)
-                        .cornerRadius(6)
-                }
-            }
-            Text("Receipt count: \(vm.receipts.count)")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .alert("Custom Category", isPresented: $showingCustomCategoryAlert) {
-            TextField("Category name", text: $customCategoryName)
-            Button("Cancel", role: .cancel) {
-                customCategoryName = ""
-            }
-            Button("Add Receipt") {
-                selectedPhotoItem = nil // Clear previous selection
-                showingSourceDialog = true
-            }
-        } message: {
-            Text("Enter a name for this receipt category:")
-        }
-    }
-
-    private func getReceiptIcon(for receipt: Receipt) -> String {
-        if receipt.type == "application/pdf" {
-            return "doc.text"
-        } else if let data = receipt.data, UIImage(data: data) != nil {
-            return "photo"
-        } else {
-            return "doc.text"
-        }
-    }
-    
-    private func getReceiptDisplayName(for receipt: Receipt) -> String {
-        guard let category = receipt.expenseCategory else { return "Receipt" }
-        
-        // First try to match with predefined categories
-        if let predefinedCategory = ReceiptCategory(rawValue: category) {
-            return predefinedCategory.displayName
-        }
-        
-        // If not a predefined category, it's a custom category name
-        return category
-    }
 }
 
 
-enum ReceiptCategory: String, CaseIterable, Identifiable {
-    case transport, hotel, upgrade, localTravel, other
-    
-    var id: String { rawValue }
-    
-    var displayName: String {
-        switch self {
-        case .transport:
-            return "Major Transport"
-        case .hotel:
-            return "Hotel"
-        case .upgrade:
-            return "Flight Upgrade"
-        case .localTravel:
-            return "Local Transit"
-        case .other:
-            return "Other"
-        }
-    }
-}
+
 
 #if DEBUG
 import SwiftUI

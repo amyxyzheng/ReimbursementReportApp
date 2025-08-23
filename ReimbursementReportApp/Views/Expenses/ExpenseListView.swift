@@ -10,21 +10,34 @@ import SwiftUI
 struct ExpenseListView: View {
     @StateObject var viewModel = ExpenseListViewModel()
     @State private var showingAddExpense = false
-    
-    @State private var editingExpense: MealItem? = nil
 
     var body: some View {
         NavigationView {
             List {
                 ForEach(viewModel.expenses, id: \.id) { expense in
-                    Button {
-                        editingExpense = expense
-                    } label: {
+                    NavigationLink(destination: AddExpenseView(viewModel: viewModel, editingExpense: expense)) {
                         ExpenseRowView(expense: expense)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain) // Prevents blue highlight
+                    .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            viewModel.deleteExpense(expense)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        Button {
+                            viewModel.toggleReimbursed(expense)
+                        } label: {
+                            Label(expense.reimbursed ? "Mark Unreimbursed" : "Mark Reimbursed", 
+                                  systemImage: expense.reimbursed ? "xmark.circle" : "checkmark.circle")
+                        }
+                        .tint(expense.reimbursed ? .orange : .green)
+                    }
                 }
-                .onDelete(perform: viewModel.deleteExpenses)
             }
             .navigationTitle("Expenses")
             .toolbar {
@@ -34,9 +47,6 @@ struct ExpenseListView: View {
             }
             .sheet(isPresented: $showingAddExpense) {
                 AddExpenseView(viewModel: viewModel)
-            }
-            .sheet(item: $editingExpense) { expense in
-                AddExpenseView(viewModel: viewModel, editingExpense: expense)
             }
         }
     }

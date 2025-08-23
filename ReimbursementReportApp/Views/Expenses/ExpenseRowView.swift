@@ -13,8 +13,17 @@ struct ExpenseRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(expense.occasion ?? "(No Occasion)")
-                    .font(.headline)
+                HStack {
+                    Text(expense.occasion ?? "(No Occasion)")
+                        .font(.headline)
+                        .foregroundColor(expense.reimbursed ? .secondary : .primary)
+                    
+                    if expense.reimbursed {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                    }
+                }
                 if let date = expense.date {
                     Text(date.formatted(.dateTime.month().day().year()))
                         .font(.caption)
@@ -22,11 +31,9 @@ struct ExpenseRowView: View {
                 }
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
-                .font(.caption)
         }
         .padding(.vertical, 4)
+        .opacity(expense.reimbursed ? 0.6 : 1.0)
     }
 }
 
