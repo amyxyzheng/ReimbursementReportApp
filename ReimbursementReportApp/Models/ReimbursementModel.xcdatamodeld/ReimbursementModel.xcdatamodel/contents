@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
-    <entity name="MealItem" representedClassName="MealItem" syncable="YES" codeGenerationType="class">
+    <entity name="ExpenseItem" representedClassName="ExpenseItem" syncable="YES" codeGenerationType="class">
         <attribute name="date" attributeType="Date" defaultDateTimeInterval="0" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="occasion" attributeType="String" defaultValueString="Meal"/>
+        <attribute name="memo" attributeType="String" defaultValueString=""/>
+        <attribute name="category" attributeType="String" defaultValueString="meal"/>
         <attribute name="receiptData" optional="YES" attributeType="Binary"/>
         <attribute name="receiptType" optional="YES" attributeType="String"/>
         <attribute name="reimbursed" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>

@@ -183,8 +183,8 @@ struct ReportCreationView: View {
     }
     
     // Add helper to fetch expense for date display
-    private func fetchExpense(for itemID: UUID) -> MealItem? {
-        let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
+    private func fetchExpense(for itemID: UUID) -> ExpenseItem? {
+        let request: NSFetchRequest<ExpenseItem> = ExpenseItem.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", itemID as CVarArg)
         request.fetchLimit = 1
         return try? context.fetch(request).first

@@ -8,13 +8,17 @@
 import SwiftUI
 
 struct ExpenseRowView: View {
-    var expense: MealItem
+    var expense: ExpenseItem
     
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
                 HStack {
-                    Text(expense.occasion ?? "(No Occasion)")
+                    if let category = expense.category, let expenseCategory = ExpenseCategory(rawValue: category) {
+                        Text(expenseCategory.icon)
+                            .font(.title2)
+                    }
+                    Text(expense.memo ?? "(No Memo)")
                         .font(.headline)
                         .foregroundColor(expense.reimbursed ? .secondary : .primary)
                     
@@ -44,8 +48,9 @@ import CoreData
 struct ExpenseRowView_Previews: PreviewProvider {
     static var previews: some View {
         ExpenseRowView(expense: {
-            let m = MealItem(context: PersistenceController.preview.container.viewContext)
-            m.occasion = "Sample Expense"
+                    let m = ExpenseItem(context: PersistenceController.preview.container.viewContext)
+        m.memo = "Sample Expense"
+        m.category = "meal"
             m.date = Date()
             return m
         }())

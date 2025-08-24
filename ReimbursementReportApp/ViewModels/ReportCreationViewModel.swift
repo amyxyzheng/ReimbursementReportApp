@@ -40,19 +40,19 @@ class ReportCreationViewModel: ObservableObject {
     func fetchItems() {
         switch selectedType {
         case .expense:
-            let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
+            let request: NSFetchRequest<ExpenseItem> = ExpenseItem.fetchRequest()
             request.predicate = NSPredicate(
                 format: "date >= %@ AND date <= %@",
                 dateRange.lowerBound as NSDate,
                 dateRange.upperBound as NSDate
             )
-            request.sortDescriptors = [NSSortDescriptor(keyPath: \MealItem.date, ascending: false)]
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \ExpenseItem.date, ascending: false)]
             do {
                 let expenses = try context.fetch(request)
                 items = expenses.map { expense in
                     SelectableItem(
                         id: expense.id ?? UUID(), 
-                        name: expense.occasion ?? "Expense", 
+                        name: expense.memo ?? "Expense", 
                         isSelected: !expense.reimbursed // Only select unreimbursed items by default
                     )
                 }
@@ -108,7 +108,7 @@ class ReportCreationViewModel: ObservableObject {
         switch selectedType {
         case .expense:
             // Fetch selected expenses
-            let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
+            let request: NSFetchRequest<ExpenseItem> = ExpenseItem.fetchRequest()
             let uuids = items.filter { $0.isSelected }.map { $0.id }
             request.predicate = NSPredicate(format: "id IN %@", uuids)
             do {

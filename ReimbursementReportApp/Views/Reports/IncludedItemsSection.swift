@@ -13,7 +13,14 @@ struct IncludedItemsSection: View {
                     Text("No items")
                 } else {
                     ForEach(expenses, id: \.id) { expense in
-                        Text("💰 \(expense.occasion ?? "Expense") - \(formattedDate(expense.date))")
+                        HStack {
+                            if let category = expense.category, let expenseCategory = ExpenseCategory(rawValue: category) {
+                                Text(expenseCategory.icon)
+                            } else {
+                                Text("💰")
+                            }
+                            Text("\(expense.memo ?? "Expense") - \(formattedDate(expense.date))")
+                        }
                     }
                 }
             } else if report.type == "trip" {
@@ -48,10 +55,10 @@ struct IncludedItemsSection: View {
         }
     }
     
-    private func fetchIncludedExpenses() -> [MealItem] {
+    private func fetchIncludedExpenses() -> [ExpenseItem] {
         guard let idStrings = report.includedItemIDs as? [String] else { return [] }
         let uuids = idStrings.compactMap { UUID(uuidString: $0) }
-        let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
+        let request: NSFetchRequest<ExpenseItem> = ExpenseItem.fetchRequest()
         request.predicate = NSPredicate(format: "id IN %@", uuids)
         do {
             return try context.fetch(request)

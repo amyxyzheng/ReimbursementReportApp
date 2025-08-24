@@ -12,10 +12,11 @@ struct AddExpenseView: View {
     @Environment(\.dismiss) private var dismissAddExpense
     @ObservedObject var viewModel: ExpenseListViewModel
 
-    let editingExpense: MealItem?
+    let editingExpense: ExpenseItem?
 
     @State private var date: Date
-    @State private var occasion: String
+    @State private var memo: String
+    @State private var category: String
     @State private var imageData: Data?
     @State private var fileType: String
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -23,12 +24,13 @@ struct AddExpenseView: View {
     @State private var pickerSource: PickerSource?
     @State private var showingDocumentPicker = false
     
-    init(viewModel: ExpenseListViewModel, editingExpense: MealItem? = nil) {
+    init(viewModel: ExpenseListViewModel, editingExpense: ExpenseItem? = nil) {
         self.viewModel = viewModel
         self.editingExpense = editingExpense
 
         _date = State(initialValue: editingExpense?.date ?? Date())
-        _occasion = State(initialValue: editingExpense?.occasion ?? "")
+        _memo = State(initialValue: editingExpense?.memo ?? "")
+        _category = State(initialValue: editingExpense?.category ?? "meal")
         _imageData = State(initialValue: editingExpense?.receiptData)
         _fileType = State(initialValue: editingExpense?.receiptType ?? "image/jpeg")
     }
@@ -36,9 +38,14 @@ struct AddExpenseView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Date & Occasion")) {
+                Section(header: Text("Date & Details")) {
                     CustomDatePicker(title: "Date", date: $date, displayedComponents: .date)
-                    TextField("Occasion", text: $occasion)
+                    Picker("Category", selection: $category) {
+                        ForEach(ExpenseCategory.allCases, id: \.self) { category in
+                            Text(category.displayName).tag(category.rawValue)
+                        }
+                    }
+                    TextField("Memo (optional - defaults to category)", text: $memo)
                 }
                 Section(header: Text("Upload Receipt")) {
                     Button(action: { showingSourceDialog = true }) {
@@ -114,17 +121,22 @@ struct AddExpenseView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                    guard let data = imageData, !occasion.isEmpty else { return }
+                    guard let data = imageData else { return }
+                    
+                    // Use memo if entered, otherwise default to category
+                    let finalMemo = memo.isEmpty ? category : memo
 
                         if let editingExpense = editingExpense {
                             viewModel.updateExpense(editingExpense,
                                                  newDate: date,
-                                                 newOccasion: occasion,
+                                                 newMemo: finalMemo,
+                                                 newCategory: category,
                                                  newData: data,
                                                  newType: fileType)
                         } else {
                             viewModel.addExpense(date: date,
-                                              occasion: occasion,
+                                              memo: finalMemo,
+                                              category: category,
                                               receiptData: data,
                                               receiptType: fileType)
                         }

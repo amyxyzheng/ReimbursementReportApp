@@ -10,7 +10,7 @@ import CoreData
 import Combine
 
 class ExpenseListViewModel: ObservableObject {
-    @Published var expenses: [MealItem] = []
+    @Published var expenses: [ExpenseItem] = []
     private let context: NSManagedObjectContext
 
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
@@ -19,8 +19,8 @@ class ExpenseListViewModel: ObservableObject {
     }
 
     func fetchExpenses() {
-        let request: NSFetchRequest<MealItem> = MealItem.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \MealItem.date, ascending: false)]
+        let request: NSFetchRequest<ExpenseItem> = ExpenseItem.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \ExpenseItem.date, ascending: false)]
         do {
             expenses = try context.fetch(request)
         } catch {
@@ -28,11 +28,12 @@ class ExpenseListViewModel: ObservableObject {
         }
     }
 
-    func addExpense(date: Date, occasion: String, receiptData: Data, receiptType: String) {
-        let expense = MealItem(context: context)
+    func addExpense(date: Date, memo: String, category: String = "meal", receiptData: Data, receiptType: String) {
+        let expense = ExpenseItem(context: context)
         expense.id = UUID()
         expense.date = date
-        expense.occasion = occasion
+        expense.memo = memo
+        expense.category = category
         expense.receiptData = receiptData
         expense.receiptType = receiptType
 
@@ -58,7 +59,7 @@ class ExpenseListViewModel: ObservableObject {
         }
     }
     
-    func deleteExpense(_ expense: MealItem) {
+    func deleteExpense(_ expense: ExpenseItem) {
         context.delete(expense)
         do {
             try context.save()
@@ -68,7 +69,7 @@ class ExpenseListViewModel: ObservableObject {
         }
     }
     
-    func toggleReimbursed(_ expense: MealItem) {
+    func toggleReimbursed(_ expense: ExpenseItem) {
         expense.reimbursed.toggle()
         do {
             try context.save()
@@ -78,13 +79,15 @@ class ExpenseListViewModel: ObservableObject {
         }
     }
     
-    func updateExpense(_ expense: MealItem,
+    func updateExpense(_ expense: ExpenseItem,
                     newDate: Date,
-                    newOccasion: String,
+                    newMemo: String,
+                    newCategory: String,
                     newData: Data,
                     newType: String) {
         expense.date = newDate
-        expense.occasion = newOccasion
+        expense.memo = newMemo
+        expense.category = newCategory
         expense.receiptData = newData
         expense.receiptType = newType
 

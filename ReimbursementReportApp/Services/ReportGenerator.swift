@@ -10,11 +10,11 @@ import UIKit
 import ZIPFoundation
 
 struct ReportGenerator {
-    static func expenseReceiptFilename(occasion: String, date: Date, id: UUID, ext: String) -> String {
-        let sanitizedOccasion = sanitize(occasion)
+    static func expenseReceiptFilename(memo: String, date: Date, id: UUID, ext: String) -> String {
+        let sanitizedMemo = sanitize(memo)
         let dateString = formatDate(date)
         let shortID = id.uuidString.prefix(4)
-        return "\(sanitizedOccasion)_\(dateString)_\(shortID).\(ext)"
+        return "\(sanitizedMemo)_\(dateString)_\(shortID).\(ext)"
     }
     
     static func tripReceiptFilename(tripName: String, category: String, date: Date, id: UUID, ext: String) -> String {
@@ -45,7 +45,7 @@ struct ReportGenerator {
         }
     }
     
-    static func generateExpenseReport(expenses: [MealItem]) -> (summary: String?, zipData: Data?, errorMessage: String?) {
+    static func generateExpenseReport(expenses: [ExpenseItem]) -> (summary: String?, zipData: Data?, errorMessage: String?) {
         guard let minDate = expenses.compactMap({ $0.date }).min(),
               let maxDate = expenses.compactMap({ $0.date }).max() else {
             return (nil, nil, "No expenses to report.")
@@ -64,10 +64,10 @@ struct ReportGenerator {
             }
             for expense in expenses {
                 guard let id = expense.id, let date = expense.date else { continue }
-                let occasion = expense.occasion ?? "Expense"
+                let memo = expense.memo ?? "Expense"
                 let (data, ext) = convertToJPEG(data: expense.receiptData ?? Data(), mimeType: expense.receiptType)
-                let filename = expenseReceiptFilename(occasion: occasion, date: date, id: id, ext: ext)
-                print("[DEBUG] expense: \(occasion), data size: \(data.count), filename: \(filename)")
+                let filename = expenseReceiptFilename(memo: memo, date: date, id: id, ext: ext)
+                print("[DEBUG] expense: \(memo), data size: \(data.count), filename: \(filename)")
                 // Add to ZIP if data is not empty
                 if !data.isEmpty {
                     do {
@@ -76,14 +76,14 @@ struct ReportGenerator {
                         })
                     } catch {
                         print("[DEBUG] Error zipping \(filename): \(error)")
-                        let msg = "Failed to add receipt for '\(occasion)' on \(formatDate(date)). Please check the receipt image and try again."
+                        let msg = "Failed to add receipt for '\(memo)' on \(formatDate(date)). Please check the receipt image and try again."
                         return (nil, nil, msg)
                     }
                 } else {
-                    let msg = "No receipt data for '\(occasion)' on \(formatDate(date)). Please check the receipt image and try again."
+                    let msg = "No receipt data for '\(memo)' on \(formatDate(date)). Please check the receipt image and try again."
                     return (nil, nil, msg)
                 }
-                summaryLines.append("• \(occasion) on \(formatDate(date)) — Receipt: \(filename)")
+                summaryLines.append("• \(memo) on \(formatDate(date)) — Receipt: \(filename)")
                 expenseCount += 1
             }
             // Read ZIP data from file

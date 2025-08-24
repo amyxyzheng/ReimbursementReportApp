@@ -38,10 +38,11 @@ extension PersistenceController {
         let controller = PersistenceController(inMemory: true)
         let viewContext = controller.container.viewContext
         // Sample meal for previews
-        let sampleMeal = MealItem(context: viewContext)
+        let sampleMeal = ExpenseItem(context: viewContext)
         sampleMeal.id = UUID()
         sampleMeal.date = Date()
-        sampleMeal.occasion = "Team Lunch"
+        sampleMeal.memo = "Team Lunch"
+        sampleMeal.category = "meal"
         sampleMeal.receiptData = Data()
         sampleMeal.receiptType = "image/jpeg"
         try? viewContext.save()
